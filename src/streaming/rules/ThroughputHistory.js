@@ -203,7 +203,9 @@ function ThroughputHistory(config) {
         const average = settings.get().streaming.abr.movingAverageMethod !== Constants.MOVING_AVERAGE_SLIDING_WINDOW ?
             getAverageEwma(isThroughput, mediaType) : getAverageSlidingWindow(isThroughput, mediaType, isDynamic);
 
-        console.log(`dash: ThroughputHistory getAverage ${average}`)
+        if (mediaType === 'video') {
+            console.log(`dash: ThroughputHistory getAverage ${average}`)
+        }
 
         return average;
     }
