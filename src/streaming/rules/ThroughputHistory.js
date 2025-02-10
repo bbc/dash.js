@@ -200,6 +200,8 @@ function ThroughputHistory(config) {
     function getAverage(isThroughput, mediaType, isDynamic) {
         // only two moving average methods defined at the moment
 
+        console.log(`getAverage`)
+        console.log(`isThroughput ${isThroughput} mediaType ${mediaType} isDynamic ${isDynamic}`);
         console.log(`movingAverageMethod: ${settings.get().streaming.abr.movingAverageMethod} !== ${Constants.MOVING_AVERAGE_SLIDING_WINDOW}`);
         
         const average = settings.get().streaming.abr.movingAverageMethod !== Constants.MOVING_AVERAGE_SLIDING_WINDOW ?
@@ -208,6 +210,7 @@ function ThroughputHistory(config) {
         if (mediaType === 'video') {
             console.log(`dash: ThroughputHistory getAverage ${average}`)
         }
+        console.log('-----')
 
         return average;
     }
@@ -218,6 +221,8 @@ function ThroughputHistory(config) {
         const sampleSize = getSampleSize(isThroughput, mediaType, isDynamic);
         const dict = isThroughput ? throughputDict : latencyDict;
         let arr = dict[mediaType];
+
+        console.log(arr);
 
         if (sampleSize === 0 || !arr || arr.length === 0) {
             return NaN;
