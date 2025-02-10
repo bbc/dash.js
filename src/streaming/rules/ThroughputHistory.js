@@ -222,7 +222,9 @@ function ThroughputHistory(config) {
         const dict = isThroughput ? throughputDict : latencyDict;
         let arr = dict[mediaType];
 
-        console.log(arr);
+        if (mediaType === 'video') {
+            console.log(arr);
+        }
 
         if (sampleSize === 0 || !arr || arr.length === 0) {
             return NaN;
