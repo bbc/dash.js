@@ -43,8 +43,8 @@ import SwitchRequestHistory from '../rules/SwitchRequestHistory';
 import DroppedFramesHistory from '../rules/DroppedFramesHistory';
 import ThroughputHistory from '../rules/ThroughputHistory';
 import Debug from '../../core/Debug';
-import {HTTPRequest} from '../vo/metrics/HTTPRequest';
-import {checkInteger} from '../utils/SupervisorTools';
+import { HTTPRequest } from '../vo/metrics/HTTPRequest';
+import { checkInteger } from '../utils/SupervisorTools';
 import MediaPlayerEvents from '../MediaPlayerEvents';
 
 const DEFAULT_VIDEO_BITRATE = 1000;
@@ -772,7 +772,9 @@ function AbrController() {
                 },
                 { streamId: streamInfo.id, mediaType: type }
             );
+
             const bitrate = throughputHistory.getAverageThroughput(type, isDynamic);
+            console.log(`_changeQuality bitrate ${bitrate}`);
             if (!isNaN(bitrate)) {
                 domStorage.setSavedBitrateSettings(type, bitrate);
             }

@@ -199,9 +199,16 @@ function ThroughputHistory(config) {
 
     function getAverage(isThroughput, mediaType, isDynamic) {
         // only two moving average methods defined at the moment
-        return settings.get().streaming.abr.movingAverageMethod !== Constants.MOVING_AVERAGE_SLIDING_WINDOW ?
+        
+        const average = settings.get().streaming.abr.movingAverageMethod !== Constants.MOVING_AVERAGE_SLIDING_WINDOW ?
             getAverageEwma(isThroughput, mediaType) : getAverageSlidingWindow(isThroughput, mediaType, isDynamic);
+
+        console.log(`dash: ThroughputHistory getAverage ${average}`)
+
+        return average;
     }
+
+
 
     function getAverageSlidingWindow(isThroughput, mediaType, isDynamic) {
         const sampleSize = getSampleSize(isThroughput, mediaType, isDynamic);
