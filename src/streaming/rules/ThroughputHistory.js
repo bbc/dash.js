@@ -222,6 +222,7 @@ function ThroughputHistory(config) {
         let arr = dict[mediaType];
 
         if (mediaType === 'video') {
+            console.log(isThroughput ? `thoughputDict` : `latencyDict`);
             console.log(arr);
         }
 
