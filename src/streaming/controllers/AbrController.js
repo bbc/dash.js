@@ -751,6 +751,7 @@ function AbrController() {
      * @private
      */
     function _changeQuality(type, oldQuality, newQuality, maxIdx, reason, streamId) {
+        console.log(`_changeQuality oldQuality ${oldQuality}, newQuality ${newQuality}`);
         if (type && streamProcessorDict[streamId] && streamProcessorDict[streamId][type]) {
             const streamInfo = streamProcessorDict[streamId][type].getStreamInfo();
             const isDynamic = streamInfo && streamInfo.manifestInfo && streamInfo.manifestInfo.isDynamic;
