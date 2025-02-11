@@ -202,21 +202,16 @@ function ABRRulesCollection(config) {
 
     
     function getMaxQuality(rulesContext) {
-        //const switchRequestArray = qualitySwitchRules.map(rule => rule.getMaxIndex(rulesContext));
+        const switchRequestArray = qualitySwitchRules.map(rule => rule.getMaxIndex(rulesContext));
 
         qualitySwitchRules.forEach(rule => {
             console.log(`ABRRulesCollection: ruleName ${rule.getClassName()}`);
         })
 
-        const switchRequestArray = qualitySwitchRules.filter(rule => {
-            const name = rule.getClassName();
-            if (['BolaRule','InsufficientBufferRule','SwitchHistoryRule','DroppedFramesRule'].contains(name)) {
-                return true;
-            }
-        })
-
         const activeRules = _getRulesWithChange(switchRequestArray);
         const maxQuality = getMinSwitchRequest(activeRules);     
+
+        console.log(`*** maxQuality ${maxQuality} ***`);
         
         return maxQuality || SwitchRequest(context).create();
     }
