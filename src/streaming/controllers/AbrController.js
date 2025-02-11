@@ -668,6 +668,7 @@ function AbrController() {
             switchHistoryDict[streamId][type].push({ oldValue: oldQuality, newValue: newQuality });
 
             if (newQuality > SwitchRequest.NO_CHANGE && newQuality !== oldQuality && (abandonmentStateDict[streamId][type].state === MetricsConstants.ALLOW_LOAD || newQuality < oldQuality)) {
+                console.log(`AbrController: checkPlaybackQuality calling _changeQuality`);
                 _changeQuality(type, oldQuality, newQuality, maxIdx, switchRequest.reason, streamId);
                 return true;
             }
@@ -760,9 +761,6 @@ function AbrController() {
         console.log(`_changeQuality oldQuality ${oldQuality}, newQuality ${newQuality}`);
         console.log(`ABR strategy ${settings.get().streaming.abr.ABRStrategy}`);
 
-        if (oldQuality === 0 && newQuality > 0) {
-            console.trace('Call stack');
-        }
         console.log(`***** window.timer ${window?.timer?.length} *****`);
         if (type && streamProcessorDict[streamId] && streamProcessorDict[streamId][type]) {
             const streamInfo = streamProcessorDict[streamId][type].getStreamInfo();
