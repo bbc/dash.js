@@ -311,6 +311,8 @@ function AbrController() {
                     confidence: 1,
                     reason: switchRequest.reason
                 });
+                console.log(`AbrController: _onFragmentLoadProgress, calling setPlaybackQuality`);
+                console.log(`AbrController: _onFragmentLoadProgress quality: ${switchRequest.quality}, reason: ${switchRequest.reason}`);
                 setPlaybackQuality(type, streamController.getActiveStreamInfo(), switchRequest.quality, switchRequest.reason);
 
                 clearTimeout(abandonmentTimeout);
@@ -714,6 +716,7 @@ function AbrController() {
      * @param {string} reason
      */
     function setPlaybackQuality(type, streamInfo, newQuality, reason = null) {
+        console.log(`AbrController: setPlaybackQuality`)
         if (!streamInfo || !streamInfo.id || !type) {
             return;
         }
