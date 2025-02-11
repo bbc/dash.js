@@ -146,7 +146,10 @@ function AbrController() {
             setElementSize();
         }
 
-        console.log(`registerStreamType type ${type}, settings ${settings.get().streaming.abr.rules.bolaRule.active}, ${_shouldApplyDynamicAbrStrategy()}`);
+        console.log('rules');
+        console.log(settings.get().streaming.abr.rules)
+
+        //console.log(`registerStreamType type ${type}, settings ${settings.get().streaming.abr.rules.b..rules.bolaRule.active}, ${_shouldApplyDynamicAbrStrategy()}`);
 
     }
 
