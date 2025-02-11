@@ -200,13 +200,43 @@ function ABRRulesCollection(config) {
         return SwitchRequest(context).create(quality, reason);
     }
 
+    
     function getMaxQuality(rulesContext) {
         const switchRequestArray = qualitySwitchRules.map(rule => rule.getMaxIndex(rulesContext));
+        const activeRules = _getRulesWithChange(switchRequestArray);
+        const maxQuality = getMinSwitchRequest(activeRules);     
+        
+        qualitySwitchRules.forEach(rule => {
+            console.log(`ABRRulesCollection: ruleName ${rule.getClassName()}`);
+        })
+        
+        return maxQuality || SwitchRequest(context).create();
+    }
+    
+
+    /*
+    function getMaxQuality(rulesContext) {
+        if (!rulesContext) {
+            return SwitchRequest(context).create()
+        }
+        // Only Throughput or Bola are active at the same time.
+        const activeQualitySwitchRules = qualitySwitchRules.filter((rule) => {
+            const ruleName = rule.getClassName();
+
+            if (ruleName !== Constants.QUALITY_SWITCH_RULES.BOLA_RULE && ruleName !== Constants.QUALITY_SWITCH_RULES.THROUGHPUT_RULE) {
+                return true
+            }
+            const mediaType = rulesContext.getMediaType();
+
+            return (shouldUseBolaRuleByMediaType[mediaType] && ruleName === Constants.QUALITY_SWITCH_RULES.BOLA_RULE) || (!shouldUseBolaRuleByMediaType[mediaType] && ruleName === Constants.QUALITY_SWITCH_RULES.THROUGHPUT_RULE)
+        })
+        const switchRequestArray = activeQualitySwitchRules.map(rule => rule.getSwitchRequest(rulesContext));
         const activeRules = _getRulesWithChange(switchRequestArray);
         const maxQuality = getMinSwitchRequest(activeRules);
 
         return maxQuality || SwitchRequest(context).create();
     }
+        */
 
     function shouldAbandonFragment(rulesContext, streamId) {
         const abandonRequestArray = abandonFragmentRules.map(rule => rule.shouldAbandon(rulesContext, streamId));
