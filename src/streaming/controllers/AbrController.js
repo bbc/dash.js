@@ -145,6 +145,9 @@ function AbrController() {
         if (type === Constants.VIDEO) {
             setElementSize();
         }
+
+        console.log(`registerStreamType type ${type}, settings ${settings.get().streaming.abr.rules.bolaRule.active}, ${_shouldApplyDynamicAbrStrategy()}`);
+
     }
 
     function _initializeAbrStrategy(type) {
