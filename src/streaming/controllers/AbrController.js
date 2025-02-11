@@ -758,8 +758,7 @@ function AbrController() {
      */
     function _changeQuality(type, oldQuality, newQuality, maxIdx, reason, streamId) {
         console.log(`_changeQuality oldQuality ${oldQuality}, newQuality ${newQuality}`);
-        console.log('rules');
-        console.log(settings.get().streaming.abr.rules)
+        console.log(`ABR strategy ${settings.get().streaming.abr.ABRStrategy}`);
 
         if (oldQuality === 0 && newQuality > 0) {
             console.trace('Call stack');
