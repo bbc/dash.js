@@ -146,9 +146,6 @@ function AbrController() {
             setElementSize();
         }
 
-        console.log('rules');
-        console.log(settings.get().streaming.abr.rules)
-
         //console.log(`registerStreamType type ${type}, settings ${settings.get().streaming.abr.rules.b..rules.bolaRule.active}, ${_shouldApplyDynamicAbrStrategy()}`);
 
     }
@@ -761,6 +758,9 @@ function AbrController() {
      */
     function _changeQuality(type, oldQuality, newQuality, maxIdx, reason, streamId) {
         console.log(`_changeQuality oldQuality ${oldQuality}, newQuality ${newQuality}`);
+        console.log('rules');
+        console.log(settings.get().streaming.abr.rules)
+
         if (oldQuality === 0 && newQuality > 0) {
             console.trace('Call stack');
         }
