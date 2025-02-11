@@ -755,6 +755,9 @@ function AbrController() {
      */
     function _changeQuality(type, oldQuality, newQuality, maxIdx, reason, streamId) {
         console.log(`_changeQuality oldQuality ${oldQuality}, newQuality ${newQuality}`);
+        if (oldQuality === 0 && newQuality > 0) {
+            console.trace('Call stack');
+        }
         console.log(`***** window.timer ${window?.timer?.length} *****`);
         if (type && streamProcessorDict[streamId] && streamProcessorDict[streamId][type]) {
             const streamInfo = streamProcessorDict[streamId][type].getStreamInfo();
