@@ -207,12 +207,6 @@ function ABRRulesCollection(config) {
     
     function getMaxQuality(rulesContext) {
         const switchRequestArray = qualitySwitchRules.map(rule => rule.getMaxIndex(rulesContext));
-
-        // MLH: This is different in Dash v5
-        qualitySwitchRules.forEach(rule => {
-            console.log(`2.1: ABRRulesCollection: ruleName ${rule.getClassName()}`);
-        })
-
         const activeRules = _getRulesWithChange(switchRequestArray); // Any rules thats not -1 (No change)
         const maxQuality = getMinSwitchRequest(activeRules);     
 
