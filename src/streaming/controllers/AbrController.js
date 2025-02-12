@@ -314,8 +314,7 @@ function AbrController() {
                     confidence: 1,
                     reason: switchRequest.reason
                 });
-                console.log(`AbrController: _onFragmentLoadProgress, calling setPlaybackQuality`);
-                console.log(`AbrController: _onFragmentLoadProgress quality: ${switchRequest.quality}, reason: ${switchRequest.reason}`);
+
                 setPlaybackQuality(type, streamController.getActiveStreamInfo(), switchRequest.quality, switchRequest.reason);
 
                 clearTimeout(abandonmentTimeout);
@@ -653,10 +652,20 @@ function AbrController() {
                 useLoLPABR: isUsingLoLPAbrDict[type],
                 videoModel
             });
+
+            /***** MLH *****/
+            // CHECK THE FOLLOWING CODE
+            // AND UNDERSTAND minIdx/maxIdx
+            // AS THIS SETS NEW QUALITY
+            // CONSOLE LOG minIdx/maxIdx
             const minIdx = getMinAllowedIndexFor(type, streamId);
             const maxIdx = getMaxAllowedIndexFor(type, streamId);
             const switchRequest = abrRulesCollection.getMaxQuality(rulesContext);
             let newQuality = switchRequest.quality;
+
+            console.log(`2: AbrController: checkPlaybackQuality`);
+            console.log(`2: minIdx ${minIdx}`);
+            console.log(`2: maxIdx ${maxIdx}`);
 
             if (minIdx !== undefined && ((newQuality > SwitchRequest.NO_CHANGE) ? newQuality : oldQuality) < minIdx) {
                 newQuality = minIdx;
@@ -668,7 +677,7 @@ function AbrController() {
             switchHistoryDict[streamId][type].push({ oldValue: oldQuality, newValue: newQuality });
 
             if (newQuality > SwitchRequest.NO_CHANGE && newQuality !== oldQuality && (abandonmentStateDict[streamId][type].state === MetricsConstants.ALLOW_LOAD || newQuality < oldQuality)) {
-                console.log(`AbrController: checkPlaybackQuality calling _changeQuality`);
+                console.log(`2: ***** CHANGING QUALITY TO ${newValue} *****`);
                 _changeQuality(type, oldQuality, newQuality, maxIdx, switchRequest.reason, streamId);
                 return true;
             }
@@ -720,7 +729,6 @@ function AbrController() {
      * @param {string} reason
      */
     function setPlaybackQuality(type, streamInfo, newQuality, reason = null) {
-        console.log(`AbrController: setPlaybackQuality`)
         if (!streamInfo || !streamInfo.id || !type) {
             return;
         }
@@ -758,10 +766,9 @@ function AbrController() {
      * @private
      */
     function _changeQuality(type, oldQuality, newQuality, maxIdx, reason, streamId) {
-        console.log(`_changeQuality oldQuality ${oldQuality}, newQuality ${newQuality}`);
-        console.log(`ABR strategy ${settings.get().streaming.abr.ABRStrategy}`);
+        console.log(`3: _changeQuality: old ${oldQuality}, new ${newQuality}`);
+        console.log(`3: TIMER: (${window?.timer?.length})`);
 
-        console.log(`***** window.timer ${window?.timer?.length} *****`);
         if (type && streamProcessorDict[streamId] && streamProcessorDict[streamId][type]) {
             const streamInfo = streamProcessorDict[streamId][type].getStreamInfo();
             const isDynamic = streamInfo && streamInfo.manifestInfo && streamInfo.manifestInfo.isDynamic;
@@ -785,7 +792,6 @@ function AbrController() {
             );
 
             const bitrate = throughputHistory.getAverageThroughput(type, isDynamic);
-            console.log(`_changeQuality bitrate ${bitrate}`);
             if (!isNaN(bitrate)) {
                 domStorage.setSavedBitrateSettings(type, bitrate);
             }

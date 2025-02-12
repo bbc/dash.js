@@ -171,6 +171,7 @@ function ABRRulesCollection(config) {
 
         for (i = 0, len = srArray.length; i < len; i += 1) {
             req = srArray[i];
+            console.log(`2.2: getMinSwitchRequest, switch request quality ${req.quality}`);
             if (req.quality !== SwitchRequest.NO_CHANGE) {
                 // We only use the new quality in case it is lower than the already saved one or if no new quality has been selected for the respective priority
                 if (values[req.priority].quality === SwitchRequest.NO_CHANGE || values[req.priority].quality > req.quality) {
@@ -181,14 +182,17 @@ function ABRRulesCollection(config) {
         }
 
         if (values[SwitchRequest.PRIORITY.WEAK].quality !== SwitchRequest.NO_CHANGE) {
+            console.log(`2.2: getMinSwitchRequest PRIORITY.WEAK`)
             newSwitchReq = values[SwitchRequest.PRIORITY.WEAK];
         }
 
         if (values[SwitchRequest.PRIORITY.DEFAULT].quality !== SwitchRequest.NO_CHANGE) {
+            console.log(`2.2: getMinSwitchRequest PRIORITY.DEFAULT`)
             newSwitchReq = values[SwitchRequest.PRIORITY.DEFAULT];
         }
 
         if (values[SwitchRequest.PRIORITY.STRONG].quality !== SwitchRequest.NO_CHANGE) {
+            console.log(`2.2: getMinSwitchRequest PRIORITY.STRONG`)
             newSwitchReq = values[SwitchRequest.PRIORITY.STRONG];
         }
 
@@ -204,11 +208,12 @@ function ABRRulesCollection(config) {
     function getMaxQuality(rulesContext) {
         const switchRequestArray = qualitySwitchRules.map(rule => rule.getMaxIndex(rulesContext));
 
+        // MLH: This is different in Dash v5
         qualitySwitchRules.forEach(rule => {
-            console.log(`ABRRulesCollection: ruleName ${rule.getClassName()}`);
+            console.log(`2.1: ABRRulesCollection: ruleName ${rule.getClassName()}`);
         })
 
-        const activeRules = _getRulesWithChange(switchRequestArray);
+        const activeRules = _getRulesWithChange(switchRequestArray); // Any rules thats not -1 (No change)
         const maxQuality = getMinSwitchRequest(activeRules);     
 
         console.log(`*** maxQuality ***`);
