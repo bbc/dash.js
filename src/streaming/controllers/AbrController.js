@@ -677,7 +677,7 @@ function AbrController() {
             switchHistoryDict[streamId][type].push({ oldValue: oldQuality, newValue: newQuality });
 
             if (newQuality > SwitchRequest.NO_CHANGE && newQuality !== oldQuality && (abandonmentStateDict[streamId][type].state === MetricsConstants.ALLOW_LOAD || newQuality < oldQuality)) {
-                console.log(`2: ***** CHANGING QUALITY TO ${newValue} *****`);
+                console.log(`2: ***** CHANGING QUALITY TO ${newQuality} *****`);
                 _changeQuality(type, oldQuality, newQuality, maxIdx, switchRequest.reason, streamId);
                 return true;
             }
