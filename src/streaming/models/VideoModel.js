@@ -263,10 +263,12 @@ function VideoModel() {
 
             setPlaybackRate(0, true);
 
-            // Halt playback until nothing is stalled.
-            const event = document.createEvent('Event');
-            event.initEvent('waiting', true, false);
-            element.dispatchEvent(event);
+            if (!element.paused) {
+                // Halt playback until nothing is stalled.
+                const event = document.createEvent('Event');
+                event.initEvent('waiting', true, false);
+                element.dispatchEvent(event);
+            }
         }
     }
 
