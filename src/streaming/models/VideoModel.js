@@ -257,13 +257,12 @@ function VideoModel() {
             stalledStreams.length === 1 &&
             (settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState || getReadyState() >= Constants.VIDEO_ELEMENT_READY_STATES.HAVE_FUTURE_DATA)
         ) {
-            logger.debug(`emitting synthetic waiting event and halting playback with playback rate 0`);
+            function emitSyntheticWaitingEvent() {
+                logger.debug(`emitting synthetic waiting event and halting playback with playback rate 0`);
 
-            previousPlaybackRate = element.playbackRate;
+                previousPlaybackRate = element.playbackRate;
+                setPlaybackRate(0, true);
 
-            setPlaybackRate(0, true);
-
-            function emitWaitingEvent() {
                 const event = document.createEvent('Event');
                 event.initEvent('waiting', true, false);
                 element.dispatchEvent(event);
@@ -271,11 +270,11 @@ function VideoModel() {
 
             if (!element.paused) {
                 // Halt Playback until nothing is stalled
-                emitWaitingEvent();
+                emitSyntheticWaitingEvent();
             } else {
                 eventBus.on(Events.PLAYBACK_PLAYING, function emitWaitOnPlay () {
                     console.log('emitting artificial waiting event');
-                    emitWaitingEvent();
+                    emitSyntheticWaitingEvent();
                     eventBus.off(Events.PLAYBACK_PLAYING, emitWaitOnPlay);
                 });
             }
