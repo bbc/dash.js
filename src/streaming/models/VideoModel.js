@@ -273,8 +273,9 @@ function VideoModel() {
                 emitSyntheticWaitingEvent();
             } else {
                 eventBus.on(Events.PLAYBACK_PLAYING, function emitWaitOnPlay () {
-                    console.log('emitting artificial waiting event');
-                    emitSyntheticWaitingEvent();
+                    if (stalledStreams.length === 1) {
+                        emitSyntheticWaitingEvent();
+                    }
                     eventBus.off(Events.PLAYBACK_PLAYING, emitWaitOnPlay);
                 });
             }
