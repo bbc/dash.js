@@ -274,9 +274,7 @@ function VideoModel() {
             } else {
                 const event = 'playing';
                 element.addEventListener(event, function emitWaitOnPlay () {
-                    if (stalledStreams.length === 1) {
-                        emitSyntheticWaitingEvent();
-                    }
+                    if (stalledStreams.length === 1) emitSyntheticWaitingEvent();
                     element.removeEventListener(event, emitWaitOnPlay);
                 });
             }
