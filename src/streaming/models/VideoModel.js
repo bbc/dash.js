@@ -272,11 +272,12 @@ function VideoModel() {
                 // Halt Playback until nothing is stalled
                 emitSyntheticWaitingEvent();
             } else {
-                eventBus.on(Events.PLAYBACK_PLAYING, function emitWaitOnPlay () {
+                const event = 'playing';
+                element.addEventListener(event, function emitWaitOnPlay () {
                     if (stalledStreams.length === 1) {
                         emitSyntheticWaitingEvent();
                     }
-                    eventBus.off(Events.PLAYBACK_PLAYING, emitWaitOnPlay);
+                    element.removeEventListener(event, emitWaitOnPlay);
                 });
             }
         }
