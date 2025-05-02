@@ -1200,6 +1200,7 @@ function StreamProcessor(config) {
 
     function prepareTrackSwitch() {
         return new Promise((resolve) => {
+            console.log(`dash js: badgers-677`);
             logger.debug(`Preparing track switch for type ${type}`);
             const shouldReplace = type === Constants.TEXT || (settings.get().streaming.trackSwitchMode[type] === Constants.TRACK_SWITCH_MODE_ALWAYS_REPLACE && playbackController.getTimeToStreamEnd(streamInfo) > settings.get().streaming.buffer.stallThreshold);
 
