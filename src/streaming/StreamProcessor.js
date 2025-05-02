@@ -1204,6 +1204,7 @@ function StreamProcessor(config) {
             logger.debug(`Preparing track switch for type ${type}`);
             const shouldReplace = type === Constants.TEXT || (settings.get().streaming.trackSwitchMode[type] === Constants.TRACK_SWITCH_MODE_ALWAYS_REPLACE && playbackController.getTimeToStreamEnd(streamInfo) > settings.get().streaming.buffer.stallThreshold);
 
+            console.log('test');
             if (!bufferController) {
                 console.log(`dash js: bufferController is null`);
                 resolve();
