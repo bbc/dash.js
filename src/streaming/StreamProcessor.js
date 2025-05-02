@@ -1204,9 +1204,15 @@ function StreamProcessor(config) {
             logger.debug(`Preparing track switch for type ${type}`);
             const shouldReplace = type === Constants.TEXT || (settings.get().streaming.trackSwitchMode[type] === Constants.TRACK_SWITCH_MODE_ALWAYS_REPLACE && playbackController.getTimeToStreamEnd(streamInfo) > settings.get().streaming.buffer.stallThreshold);
 
+            if (!bufferController) {
+                console.log(`dash js: bufferController is null`);
+                resolve();
+                return;
+            }
+
             // when buffering is completed and we are not supposed to replace anything do nothing.
             // Still we need to trigger preloading again and call change type in case user seeks back before transitioning to next period
-            if (bufferController && bufferController.getIsBufferingCompleted() && !shouldReplace) {
+            if (bufferController.getIsBufferingCompleted() && !shouldReplace) {
                 bufferController.prepareForNonReplacementTrackSwitch(mediaInfo.codec)
                     .then(() => {
                         eventBus.trigger(Events.BUFFERING_COMPLETED, {}, { streamId: streamInfo.id, mediaType: type })
