@@ -1204,12 +1204,10 @@ function StreamProcessor(config) {
             logger.debug(`Preparing track switch for type ${type}`);
             const shouldReplace = type === Constants.TEXT || (settings.get().streaming.trackSwitchMode[type] === Constants.TRACK_SWITCH_MODE_ALWAYS_REPLACE && playbackController.getTimeToStreamEnd(streamInfo) > settings.get().streaming.buffer.stallThreshold);
 
-
-            console.log('dash js: streamInfo', streamInfo);
+            // Cancel track switching if streamInfo is null, indicative of a reset.
             if (!streamInfo) {
-                console.log(`dash js: streamInfo is null, returning`);
-                resolve();
-                return;
+                logger.info(`Track switch cancelled because streamInfo was null due to reset.`);
+                return resolve();
             }
 
             // when buffering is completed and we are not supposed to replace anything do nothing.
