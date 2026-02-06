@@ -600,8 +600,9 @@ function TimeSyncController() {
         if (!_isOffsetDriftWithinThreshold(averageOffset)) {
             logger.debug(`Completed background UTC sync. Setting client - server offset to ${averageOffset}`);
             lastOffset = averageOffset;
+            const artificialTimeOffsetToApply = settings.get().streaming.utcSynchronization.artificialTimeOffsetToApply;
             eventBus.trigger(Events.UPDATE_TIME_SYNC_OFFSET, {
-                offset: lastOffset
+                offset: artificialTimeOffsetToApply + lastOffset
             });
         } else {
             logger.debug(`Completed background UTC sync. Offset is within allowed threshold and is not adjusted.`);
