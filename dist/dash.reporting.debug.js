@@ -804,7 +804,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *            },
  *            timeShiftBuffer: {
  *                calcFromSegmentTimeline: false,
- *                fallbackToSegmentTimeline: true
+ *                fallbackToSegmentTimeline: true,
+ *                maxDecoderRate: NaN
  *            },
  *            metrics: {
  *              maxListDepth: 100
@@ -833,6 +834,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *                hybridSwitchBufferTime: NaN,
  *                longFormContentDurationThreshold: 600,
  *                stallThreshold: 0.3,
+ *                lowLatencyStallThreshold: 0.3,
  *                useAppendWindow: true,
  *                setStallState: true,
  *                avoidCurrentTimeRangePruning: false,
@@ -867,7 +869,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *                defaultTimingSource: {
  *                    scheme: 'urn:mpeg:dash:utc:http-xsdate:2014',
  *                    value: 'http://time.akamai.com/?iso&ms'
- *                }
+ *                },
+ *                artificialTimeOffsetToApply: 0
  *            },
  *            scheduling: {
  *                defaultTimeout: 500,
@@ -889,7 +892,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *                  stop: { min: NaN, max: NaN }
  *                },
  *                playbackBufferMin: 0.5,
- *                liveThreshold: 30,
+ *                liveThreshold: -1,
  *                enabled: null,
  *                mode: Constants.LIVE_CATCHUP_MODE_DEFAULT
  *            },
@@ -969,6 +972,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *                mode: Constants.CMCD_MODE_QUERY,
  *                enabledKeys: ['br', 'd', 'ot', 'tb' , 'bl', 'dl', 'mtp', 'nor', 'nrr', 'su' , 'bs', 'rtp' , 'cid', 'pr', 'sf', 'sid', 'st', 'v']
  *            },
+ *            dvbReporting: {
+ *                reportingUrl: null,
+ *            },
  *            cmsd: {
  *                enabled: false,
  *                abr: {
@@ -989,9 +995,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * @typedef {Object} TimeShiftBuffer
  * @property {boolean} [calcFromSegmentTimeline=false]
  * Enable calculation of the DVR window for SegmentTimeline manifests based on the entries in \<SegmentTimeline\>.
- *  * @property {boolean} [fallbackToSegmentTimeline=true]
+ * @property {boolean} [fallbackToSegmentTimeline=true]
  * In case the MPD uses \<SegmentTimeline\ and no segment is found within the DVR window the DVR window is calculated based on the entries in \<SegmentTimeline\>.
- */
+ * @property {number} [maxDecoderRate=NaN]
+ * The maximum rate your decoder can run at, can be used to overshoot the startup seek in anticpation of delay in hardware e.g.) TVs
+*/
 
 /**
  * @typedef {Object} LiveDelay
@@ -1070,12 +1078,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * When the time is set higher than the default you will have to wait longer to see automatic bitrate switches but will have a larger buffer which will increase stability.
  * @property {number} [stallThreshold=0.3]
  * Stall threshold used in BufferController.js to determine whether a track should still be changed and which buffer range to prune.
+ * @property {number} [lowLatencyStallThreshold=0.3]
+ * Low Latency stall threshold used in BufferController.js to determine whether a track should still be changed and which buffer range to prune. 
  * @property {boolean} [useAppendWindow=true]
  * Specifies if the appendWindow attributes of the MSE SourceBuffers should be set according to content duration from manifest.
  * @property {boolean} [setStallState=true]
  * Specifies if we record stalled streams once the stall threshold is reached
  * @property {module:Settings~SyntheticStallSettings} [syntheticStallEvents]
  * Specified if we fire manual stall events once the stall threshold is reached
+ * 
  * @property {boolean} [avoidCurrentTimeRangePruning=false]
  * Avoids pruning of the buffered range that contains the current playback time.
  *
@@ -1218,6 +1229,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *
  * @property {object} [defaultTimingSource={scheme:'urn:mpeg:dash:utc:http-xsdate:2014',value: 'http://time.akamai.com/?iso&ms'}]
  * The default timing source to be used. The timing sources in the MPD take precedence over this one.
+ * 
+ * @property {number} [artificialTimeOffsetToApply=0]
+ * The offset defined in milliseconds that is applied on top of the offset that was derived after the time synchronization.
  */
 
 /**
@@ -1236,7 +1250,28 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * Enable/disable subtitle rendering by default.
  * @property {boolean} [extendSegmentedCues=true]
  * Enable/disable patching of segmented cues in order to merge as a single cue by extending cue end time.
- * @property {object} [webvtt={customRenderingEnabled=false}]
+ * @property {boolean} [imsc.displayForcedOnlyMode=false]
+ * Enable/disable forced only mode in IMSC captions.
+ * When true, only those captions where itts:forcedDisplay="true" will be displayed.
+ * @property {boolean} [imsc.enableRollUp=true]
+ * Enable/disable rollUp style display of IMSC captions.
+ * @property {object} [imsc.options]
+ * IMSC styling options - See the renderHtml function of imscJS for full details 
+ * @property {number} [imsc.options.sizeAdjust]
+ * IMSC styling option - scales the text size and line padding
+ * @property {number} [imsc.options.lineHeightAdjust]
+ * IMSC styling option - scales the line height
+ * @property {number} [imsc.options.backgroundOpacityScale]
+ * IMSC styling option - scales the backgroundColor opacity
+ * @property {string} [imsc.options.fontFamily]
+ * IMSC styling option - comma-separated list of font family values to use, if present.
+ * @property {number} [imsc.options.colorOpacityScale]
+ * IMSC styling option - opacity override on text color
+ * @property {number} [imsc.options.regionOpacityScale]
+ * IMSC styling option - scales the region opacity
+ * @property {string} [imsc.options.textOutline]
+ * IMSC styling option - textOutline value to use, if present
+ * @property {object} [webvtt.customRenderingEnabled=false]
  * Enables the custom rendering for WebVTT captions. For details refer to the "Subtitles and Captions" sample section of dash.js.
  * Custom WebVTT rendering requires the external library vtt.js that can be found in the contrib folder.
  */
@@ -1282,7 +1317,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * @property {number} [playbackBufferMin=0.5]
  * Use this parameter to specify the minimum buffer which is used for LoL+ based playback rate reduction.
  *
- * @property {boolean} [liveThreshold=30]
+ * @property {boolean} [liveThreshold=-1]
  * How far in seconds the client has to be behind the absolute target for the catchup controller to attempt catching up. Disabled by setting to -1
  *
  * @property {boolean} [enabled=null]
@@ -1475,6 +1510,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  */
 
 /**
+ * @typedef {Object} module:Settings~DvbReportingSettings
+ * @property {string} [reportingUrl]
+ * Overide DVB reporting url.
+ */
+
+/**
  * @typedef {Object} module:Settings~CmsdSettings
  * @property {boolean} [enabled=false]
  * Enable or disable the CMSD response headers parsing.
@@ -1605,6 +1646,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * Adaptive Bitrate algorithm related settings.
  * @property {module:Settings~CmcdSettings} cmcd
  * Settings related to Common Media Client Data reporting.
+ * @property {module:Settings~DvbReportingSettings} dvbReporting
+ * Settings related to Common Media Client Data reporting.
  * @property {module:Settings~CmsdSettings} cmsd
  * Settings related to Common Media Server Data parsing.
  */
@@ -1658,7 +1701,8 @@ function Settings() {
       },
       timeShiftBuffer: {
         calcFromSegmentTimeline: false,
-        fallbackToSegmentTimeline: true
+        fallbackToSegmentTimeline: true,
+        maxDecoderRate: null
       },
       metrics: {
         maxListDepth: 100
@@ -1687,6 +1731,7 @@ function Settings() {
         hybridSwitchBufferTime: NaN,
         longFormContentDurationThreshold: 600,
         stallThreshold: 0.3,
+        lowLatencyStallThreshold: 0.3,
         useAppendWindow: true,
         setStallState: true,
         avoidCurrentTimeRangePruning: false,
@@ -1720,7 +1765,8 @@ function Settings() {
         defaultTimingSource: {
           scheme: 'urn:mpeg:dash:utc:http-xsdate:2014',
           value: 'https://time.akamai.com/?iso&ms'
-        }
+        },
+        artificialTimeOffsetToApply: 0
       },
       scheduling: {
         defaultTimeout: 500,
@@ -1730,6 +1776,19 @@ function Settings() {
       text: {
         defaultEnabled: true,
         extendSegmentedCues: true,
+        imsc: {
+          displayForcedOnlyMode: false,
+          enableRollUp: true,
+          options: {
+            sizeAdjust: 1,
+            lineHeightAdjust: 1,
+            backgroundOpacityScale: null,
+            fontFamily: null,
+            colorOpacityScale: 1,
+            regionOpacityScale: null,
+            textOutline: null
+          }
+        },
         webvtt: {
           customRenderingEnabled: false
         }
@@ -1751,7 +1810,7 @@ function Settings() {
           }
         },
         playbackBufferMin: 0.5,
-        liveThreshold: 30,
+        liveThreshold: -1,
         enabled: null,
         mode: _streaming_constants_Constants__WEBPACK_IMPORTED_MODULE_3__["default"].LIVE_CATCHUP_MODE_DEFAULT
       },
@@ -1835,6 +1894,9 @@ function Settings() {
         rtpSafetyFactor: 5,
         mode: _streaming_constants_Constants__WEBPACK_IMPORTED_MODULE_3__["default"].CMCD_MODE_QUERY,
         enabledKeys: ['br', 'd', 'ot', 'tb', 'bl', 'dl', 'mtp', 'nor', 'nrr', 'su', 'bs', 'rtp', 'cid', 'pr', 'sf', 'sid', 'st', 'v']
+      },
+      dvbReporting: {
+        reportingUrl: null
       },
       cmsd: {
         enabled: false,
@@ -3739,8 +3801,7 @@ function MetricsController(config) {
       rangeController.initialize(metricsEntry.Range);
       reportingController = (0,_ReportingController__WEBPACK_IMPORTED_MODULE_1__["default"])(context).create({
         debug: config.debug,
-        metricsConstants: config.metricsConstants,
-        mediaPlayerModel: config.mediaPlayerModel
+        metricsConstants: config.metricsConstants
       });
       reportingController.initialize(metricsEntry.Reporting, rangeController);
       metricsHandlersController = (0,_MetricsHandlersController__WEBPACK_IMPORTED_MODULE_2__["default"])(context).create({
@@ -4285,7 +4346,11 @@ function BufferLevelHandler(config) {
 
   function handleNewMetric(metric, vo, type) {
     if (metric === metricsConstants.BUFFER_LEVEL) {
-      storedVOs[type] = vo;
+      if (vo.level < 0) {
+        delete storedVOs[type];
+      } else {
+        storedVOs[type] = vo;
+      }
     }
   }
 
@@ -4678,6 +4743,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _utils_MetricSerialiser__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../utils/MetricSerialiser */ "./src/streaming/metrics/utils/MetricSerialiser.js");
 /* harmony import */ var _utils_RNG__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../utils/RNG */ "./src/streaming/metrics/utils/RNG.js");
 /* harmony import */ var _models_CustomParametersModel__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../models/CustomParametersModel */ "./src/streaming/models/CustomParametersModel.js");
+/* harmony import */ var _core_Settings__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../../core/Settings */ "./src/core/Settings.js");
 /**
  * The copyright in this software is being made available under the BSD License,
  * included below. This software may be subject to other third party and contributor
@@ -4712,11 +4778,19 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
 function DVBReporting(config) {
   config = config || {};
   var instance;
   var context = this.context;
-  var metricSerialiser, customParametersModel, randomNumberGenerator, reportingPlayerStatusDecided, isReportingPlayer, reportingUrl, rangeController;
+  var metricSerialiser,
+      customParametersModel,
+      randomNumberGenerator,
+      reportingPlayerStatusDecided,
+      isReportingPlayer,
+      reportingUrl,
+      rangeController,
+      settings = (0,_core_Settings__WEBPACK_IMPORTED_MODULE_3__["default"])(context).getInstance();
   var USE_DRAFT_DVB_SPEC = true;
   var allowPendingRequestsToCompleteOnReset = true;
   var pendingRequests = [];
@@ -4806,11 +4880,11 @@ function DVBReporting(config) {
   function initialize(entry, rc) {
     var probability;
     rangeController = rc;
-    reportingUrl = entry.dvb_reportingUrl; // If a required attribute is missing, the Reporting descriptor may
+    reportingUrl = settings.get().streaming.dvbReporting.reportingUrl || entry.dvb_reportingUrl; // If a required attribute is missing, the Reporting descriptor may
     // be ignored by the Player
 
     if (!reportingUrl) {
-      throw new Error('required parameter missing (dvb:reportingUrl)');
+      throw new Error('MPD parameter missing "dvb:reportingUrl" or URL not given in settings');
     } // A Player's status, as a reporting Player or not, shall remain
     // static for the duration of the MPD, regardless of MPD updates.
     // (i.e. only calling reset (or failure) changes this state)
@@ -5526,19 +5600,19 @@ var DVBErrors = function DVBErrors() {
   // ErrorType column below the value is as described in the
   // Value column.
   //
-  // ErrorType                                            Value
-  // ---------                                            -----
-  // HTTP error status code                               HTTP status code
-  // Unknown HTTP status code                             HTTP status code
-  // SSL connection failed                                "SSL" followed by SSL alert value
-  // DNS resolution failed                                "C00"
-  // Host unreachable                                     "C01"
-  // Connection refused                                   "C02"
-  // Connection error – Not otherwise specified           "C03"
-  // Corrupt media – ISO BMFF container cannot be parsed  "M00"
-  // Corrupt media – Not otherwise specified              "M01"
-  // Changing Base URL in use due to errors               "F00"
-  // Becoming an error reporting Player                   "S00"
+  // ErrorType                                                    Value
+  // ---------                                                    -----
+  // HTTP error status code                                       HTTP status code
+  // Unknown HTTP status code                                     HTTP status code
+  // SSL connection failed                                        "SSL" followed by SSL alert value
+  // DNS resolution failed                                        "C00"
+  // Host unreachable                                             "C01"
+  // Connection refused                                           "C02"
+  // Connection error – Not otherwise specified                   "C03"
+  // Corrupt media – ISO BMFF container cannot be parsed          "M00"
+  // Corrupt media – Not otherwise specified                      "M01"
+  // Changing Base URL in use due to errors                       "F00"
+  // Becoming an error reporting Player                           "S00"
 
   this.terror = null; // Real-Time - Date and time at which error occurred in UTC,
   // formatted as a combined date and time according to ISO 8601.

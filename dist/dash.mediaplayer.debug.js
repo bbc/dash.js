@@ -3025,7 +3025,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *            },
  *            timeShiftBuffer: {
  *                calcFromSegmentTimeline: false,
- *                fallbackToSegmentTimeline: true
+ *                fallbackToSegmentTimeline: true,
+ *                maxDecoderRate: NaN
  *            },
  *            metrics: {
  *              maxListDepth: 100
@@ -3054,6 +3055,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *                hybridSwitchBufferTime: NaN,
  *                longFormContentDurationThreshold: 600,
  *                stallThreshold: 0.3,
+ *                lowLatencyStallThreshold: 0.3,
  *                useAppendWindow: true,
  *                setStallState: true,
  *                avoidCurrentTimeRangePruning: false,
@@ -3088,7 +3090,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *                defaultTimingSource: {
  *                    scheme: 'urn:mpeg:dash:utc:http-xsdate:2014',
  *                    value: 'http://time.akamai.com/?iso&ms'
- *                }
+ *                },
+ *                artificialTimeOffsetToApply: 0
  *            },
  *            scheduling: {
  *                defaultTimeout: 500,
@@ -3110,7 +3113,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *                  stop: { min: NaN, max: NaN }
  *                },
  *                playbackBufferMin: 0.5,
- *                liveThreshold: 30,
+ *                liveThreshold: -1,
  *                enabled: null,
  *                mode: Constants.LIVE_CATCHUP_MODE_DEFAULT
  *            },
@@ -3190,6 +3193,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *                mode: Constants.CMCD_MODE_QUERY,
  *                enabledKeys: ['br', 'd', 'ot', 'tb' , 'bl', 'dl', 'mtp', 'nor', 'nrr', 'su' , 'bs', 'rtp' , 'cid', 'pr', 'sf', 'sid', 'st', 'v']
  *            },
+ *            dvbReporting: {
+ *                reportingUrl: null,
+ *            },
  *            cmsd: {
  *                enabled: false,
  *                abr: {
@@ -3210,9 +3216,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * @typedef {Object} TimeShiftBuffer
  * @property {boolean} [calcFromSegmentTimeline=false]
  * Enable calculation of the DVR window for SegmentTimeline manifests based on the entries in \<SegmentTimeline\>.
- *  * @property {boolean} [fallbackToSegmentTimeline=true]
+ * @property {boolean} [fallbackToSegmentTimeline=true]
  * In case the MPD uses \<SegmentTimeline\ and no segment is found within the DVR window the DVR window is calculated based on the entries in \<SegmentTimeline\>.
- */
+ * @property {number} [maxDecoderRate=NaN]
+ * The maximum rate your decoder can run at, can be used to overshoot the startup seek in anticpation of delay in hardware e.g.) TVs
+*/
 
 /**
  * @typedef {Object} LiveDelay
@@ -3291,12 +3299,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * When the time is set higher than the default you will have to wait longer to see automatic bitrate switches but will have a larger buffer which will increase stability.
  * @property {number} [stallThreshold=0.3]
  * Stall threshold used in BufferController.js to determine whether a track should still be changed and which buffer range to prune.
+ * @property {number} [lowLatencyStallThreshold=0.3]
+ * Low Latency stall threshold used in BufferController.js to determine whether a track should still be changed and which buffer range to prune. 
  * @property {boolean} [useAppendWindow=true]
  * Specifies if the appendWindow attributes of the MSE SourceBuffers should be set according to content duration from manifest.
  * @property {boolean} [setStallState=true]
  * Specifies if we record stalled streams once the stall threshold is reached
  * @property {module:Settings~SyntheticStallSettings} [syntheticStallEvents]
  * Specified if we fire manual stall events once the stall threshold is reached
+ * 
  * @property {boolean} [avoidCurrentTimeRangePruning=false]
  * Avoids pruning of the buffered range that contains the current playback time.
  *
@@ -3439,6 +3450,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *
  * @property {object} [defaultTimingSource={scheme:'urn:mpeg:dash:utc:http-xsdate:2014',value: 'http://time.akamai.com/?iso&ms'}]
  * The default timing source to be used. The timing sources in the MPD take precedence over this one.
+ * 
+ * @property {number} [artificialTimeOffsetToApply=0]
+ * The offset defined in milliseconds that is applied on top of the offset that was derived after the time synchronization.
  */
 
 /**
@@ -3457,7 +3471,28 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * Enable/disable subtitle rendering by default.
  * @property {boolean} [extendSegmentedCues=true]
  * Enable/disable patching of segmented cues in order to merge as a single cue by extending cue end time.
- * @property {object} [webvtt={customRenderingEnabled=false}]
+ * @property {boolean} [imsc.displayForcedOnlyMode=false]
+ * Enable/disable forced only mode in IMSC captions.
+ * When true, only those captions where itts:forcedDisplay="true" will be displayed.
+ * @property {boolean} [imsc.enableRollUp=true]
+ * Enable/disable rollUp style display of IMSC captions.
+ * @property {object} [imsc.options]
+ * IMSC styling options - See the renderHtml function of imscJS for full details 
+ * @property {number} [imsc.options.sizeAdjust]
+ * IMSC styling option - scales the text size and line padding
+ * @property {number} [imsc.options.lineHeightAdjust]
+ * IMSC styling option - scales the line height
+ * @property {number} [imsc.options.backgroundOpacityScale]
+ * IMSC styling option - scales the backgroundColor opacity
+ * @property {string} [imsc.options.fontFamily]
+ * IMSC styling option - comma-separated list of font family values to use, if present.
+ * @property {number} [imsc.options.colorOpacityScale]
+ * IMSC styling option - opacity override on text color
+ * @property {number} [imsc.options.regionOpacityScale]
+ * IMSC styling option - scales the region opacity
+ * @property {string} [imsc.options.textOutline]
+ * IMSC styling option - textOutline value to use, if present
+ * @property {object} [webvtt.customRenderingEnabled=false]
  * Enables the custom rendering for WebVTT captions. For details refer to the "Subtitles and Captions" sample section of dash.js.
  * Custom WebVTT rendering requires the external library vtt.js that can be found in the contrib folder.
  */
@@ -3503,7 +3538,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * @property {number} [playbackBufferMin=0.5]
  * Use this parameter to specify the minimum buffer which is used for LoL+ based playback rate reduction.
  *
- * @property {boolean} [liveThreshold=30]
+ * @property {boolean} [liveThreshold=-1]
  * How far in seconds the client has to be behind the absolute target for the catchup controller to attempt catching up. Disabled by setting to -1
  *
  * @property {boolean} [enabled=null]
@@ -3696,6 +3731,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  */
 
 /**
+ * @typedef {Object} module:Settings~DvbReportingSettings
+ * @property {string} [reportingUrl]
+ * Overide DVB reporting url.
+ */
+
+/**
  * @typedef {Object} module:Settings~CmsdSettings
  * @property {boolean} [enabled=false]
  * Enable or disable the CMSD response headers parsing.
@@ -3826,6 +3867,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * Adaptive Bitrate algorithm related settings.
  * @property {module:Settings~CmcdSettings} cmcd
  * Settings related to Common Media Client Data reporting.
+ * @property {module:Settings~DvbReportingSettings} dvbReporting
+ * Settings related to Common Media Client Data reporting.
  * @property {module:Settings~CmsdSettings} cmsd
  * Settings related to Common Media Server Data parsing.
  */
@@ -3879,7 +3922,8 @@ function Settings() {
       },
       timeShiftBuffer: {
         calcFromSegmentTimeline: false,
-        fallbackToSegmentTimeline: true
+        fallbackToSegmentTimeline: true,
+        maxDecoderRate: null
       },
       metrics: {
         maxListDepth: 100
@@ -3908,6 +3952,7 @@ function Settings() {
         hybridSwitchBufferTime: NaN,
         longFormContentDurationThreshold: 600,
         stallThreshold: 0.3,
+        lowLatencyStallThreshold: 0.3,
         useAppendWindow: true,
         setStallState: true,
         avoidCurrentTimeRangePruning: false,
@@ -3941,7 +3986,8 @@ function Settings() {
         defaultTimingSource: {
           scheme: 'urn:mpeg:dash:utc:http-xsdate:2014',
           value: 'https://time.akamai.com/?iso&ms'
-        }
+        },
+        artificialTimeOffsetToApply: 0
       },
       scheduling: {
         defaultTimeout: 500,
@@ -3951,6 +3997,19 @@ function Settings() {
       text: {
         defaultEnabled: true,
         extendSegmentedCues: true,
+        imsc: {
+          displayForcedOnlyMode: false,
+          enableRollUp: true,
+          options: {
+            sizeAdjust: 1,
+            lineHeightAdjust: 1,
+            backgroundOpacityScale: null,
+            fontFamily: null,
+            colorOpacityScale: 1,
+            regionOpacityScale: null,
+            textOutline: null
+          }
+        },
         webvtt: {
           customRenderingEnabled: false
         }
@@ -3972,7 +4031,7 @@ function Settings() {
           }
         },
         playbackBufferMin: 0.5,
-        liveThreshold: 30,
+        liveThreshold: -1,
         enabled: null,
         mode: _streaming_constants_Constants__WEBPACK_IMPORTED_MODULE_3__["default"].LIVE_CATCHUP_MODE_DEFAULT
       },
@@ -4056,6 +4115,9 @@ function Settings() {
         rtpSafetyFactor: 5,
         mode: _streaming_constants_Constants__WEBPACK_IMPORTED_MODULE_3__["default"].CMCD_MODE_QUERY,
         enabledKeys: ['br', 'd', 'ot', 'tb', 'bl', 'dl', 'mtp', 'nor', 'nrr', 'su', 'bs', 'rtp', 'cid', 'pr', 'sf', 'sid', 'st', 'v']
+      },
+      dvbReporting: {
+        reportingUrl: null
       },
       cmsd: {
         enabled: false,
@@ -6559,18 +6621,18 @@ function DashHandler(config) {
     return !!(isDynamicManifest && representation.adaptation.period.nextPeriodId && representation.segmentInfoType === _constants_DashConstants__WEBPACK_IMPORTED_MODULE_5__["default"].SEGMENT_TIMELINE && representation.mediaFinishedInformation && !isNaN(representation.mediaFinishedInformation.mediaTimeOfLastSignaledSegment) && lastSegment && !isNaN(lastSegment.mediaStartTime) && !isNaN(lastSegment.duration) && lastSegment.mediaStartTime + lastSegment.duration >= representation.mediaFinishedInformation.mediaTimeOfLastSignaledSegment - 0.05);
   }
 
-  function getSegmentRequestForTime(mediaInfo, representation, time) {
+  function getSegmentRequestForTime(mediaInfo, representation, timeToRequest) {
     var request = null;
 
     if (!representation || !representation.segmentInfoType) {
       return request;
     }
 
-    var segment = segmentsController.getSegmentByTime(representation, time);
+    var segment = segmentsController.getSegment(representation, null, timeToRequest);
 
     if (segment) {
       lastSegment = segment;
-      logger.debug('Index for time ' + time + ' is ' + segment.index);
+      logger.debug('Index for time ' + timeToRequest + ' is ' + segment.index);
       request = _getRequestForSegment(mediaInfo, segment);
     }
 
@@ -6586,8 +6648,10 @@ function DashHandler(config) {
 
   function getNextSegmentRequestIdempotent(mediaInfo, representation) {
     var request = null;
+    var segmentDuration = representation.segmentDuration;
     var indexToRequest = lastSegment ? lastSegment.index + 1 : 0;
-    var segment = segmentsController.getSegmentByIndex(representation, indexToRequest, lastSegment ? lastSegment.mediaStartTime : -1);
+    var timeToRequest = lastSegment ? lastSegment.mediaStartTime + segmentDuration : 0;
+    var segment = segmentsController.getSegment(representation, indexToRequest, timeToRequest);
     if (!segment) return null;
     request = _getRequestForSegment(mediaInfo, segment);
     return request;
@@ -6605,8 +6669,10 @@ function DashHandler(config) {
       return null;
     }
 
+    var segmentDuration = representation.segmentDuration;
     var indexToRequest = lastSegment ? lastSegment.index + 1 : 0;
-    return _getRequest(mediaInfo, representation, indexToRequest);
+    var timeToRequest = lastSegment ? lastSegment.mediaStartTime + segmentDuration : 0;
+    return _getRequest(mediaInfo, representation, indexToRequest, timeToRequest);
   }
 
   function repeatSegmentRequest(mediaInfo, representation) {
@@ -6615,12 +6681,13 @@ function DashHandler(config) {
     }
 
     var indexToRequest = lastSegment ? lastSegment.index : 0;
-    return _getRequest(mediaInfo, representation, indexToRequest);
+    var timeToRequest = lastSegment ? lastSegment.mediaStartTime : 0;
+    return _getRequest(mediaInfo, representation, indexToRequest, timeToRequest);
   }
 
-  function _getRequest(mediaInfo, representation, indexToRequest) {
+  function _getRequest(mediaInfo, representation, indexToRequest, timeToRequest) {
     var request = null;
-    var segment = segmentsController.getSegmentByIndex(representation, indexToRequest, lastSegment ? lastSegment.mediaStartTime : -1); // No segment found
+    var segment = segmentsController.getSegment(representation, indexToRequest, timeToRequest); // No segment found
 
     if (!segment) {
       // Dynamic manifest there might be something available in the next iteration
@@ -9550,14 +9617,9 @@ function SegmentsController(config) {
     return representation ? representation.segments ? getters[dashConstants.SEGMENT_BASE] : getters[representation.segmentInfoType] : null;
   }
 
-  function getSegmentByIndex(representation, index, lastSegmentTime) {
+  function getSegment(representation, index, requestedTime) {
     var getter = getSegmentsGetter(representation);
-    return getter ? getter.getSegmentByIndex(representation, index, lastSegmentTime) : null;
-  }
-
-  function getSegmentByTime(representation, time) {
-    var getter = getSegmentsGetter(representation);
-    return getter ? getter.getSegmentByTime(representation, time) : null;
+    return getter ? getter.getSegment(representation, index, requestedTime) : null;
   }
 
   function getMediaFinishedInformation(representation) {
@@ -9572,8 +9634,7 @@ function SegmentsController(config) {
     initialize: initialize,
     updateInitData: updateInitData,
     updateSegmentData: updateSegmentData,
-    getSegmentByIndex: getSegmentByIndex,
-    getSegmentByTime: getSegmentByTime,
+    getSegment: getSegment,
     getMediaFinishedInformation: getMediaFinishedInformation
   };
   setup();
@@ -12938,6 +12999,11 @@ function ListSegmentsGetter(config, isDynamic) {
     return mediaFinishedInformation;
   }
 
+  function getSegment(representation, index, requestedTime) {
+    if (index != null) return getSegmentByIndex(representation, index);
+    return getSegmentByTime(representation, requestedTime);
+  }
+
   function getSegmentByIndex(representation, index) {
     checkConfig();
 
@@ -12986,8 +13052,7 @@ function ListSegmentsGetter(config, isDynamic) {
   }
 
   instance = {
-    getSegmentByIndex: getSegmentByIndex,
-    getSegmentByTime: getSegmentByTime,
+    getSegment: getSegment,
     getMediaFinishedInformation: getMediaFinishedInformation
   };
   return instance;
@@ -13184,6 +13249,11 @@ function SegmentBaseGetter(config) {
     return mediaFinishedInformation;
   }
 
+  function getSegment(representation, index, requestedTime) {
+    if (index != null) return getSegmentByIndex(representation, index);
+    return getSegmentByTime(representation, requestedTime);
+  }
+
   function getSegmentByIndex(representation, index) {
     checkConfig();
 
@@ -13247,8 +13317,7 @@ function SegmentBaseGetter(config) {
   }
 
   instance = {
-    getSegmentByIndex: getSegmentByIndex,
-    getSegmentByTime: getSegmentByTime,
+    getSegment: getSegment,
     getMediaFinishedInformation: getMediaFinishedInformation
   };
   return instance;
@@ -13563,6 +13632,11 @@ function TemplateSegmentsGetter(config, isDynamic) {
     return mediaFinishedInformation;
   }
 
+  function getSegment(representation, index, requestedTime) {
+    if (index != null) return getSegmentByIndex(representation, index);
+    return getSegmentByTime(representation, requestedTime);
+  }
+
   function getSegmentByIndex(representation, index) {
     checkConfig();
 
@@ -13606,8 +13680,7 @@ function TemplateSegmentsGetter(config, isDynamic) {
   }
 
   instance = {
-    getSegmentByIndex: getSegmentByIndex,
-    getSegmentByTime: getSegmentByTime,
+    getSegment: getSegment,
     getMediaFinishedInformation: getMediaFinishedInformation
   };
   return instance;
@@ -14217,36 +14290,8 @@ function TimelineSegmentsGetter(config, isDynamic) {
     return Math.max(Math.ceil((repeatEndTime - scaledTime) / (frag.d / fTimescale)) - 1, 0);
   }
 
-  function getSegmentByIndex(representation, index, lastSegmentTime) {
-    checkConfig();
-
-    if (!representation) {
-      return null;
-    }
-
-    var segment = null;
-    var found = false;
-    iterateSegments(representation, function (time, base, list, frag, fTimescale, relativeIdx, i) {
-      if (found || lastSegmentTime < 0) {
-        var media = base.media;
-        var mediaRange = frag.mediaRange;
-
-        if (list) {
-          media = list[i].media || '';
-          mediaRange = list[i].mediaRange;
-        }
-
-        segment = (0,_SegmentsUtils__WEBPACK_IMPORTED_MODULE_2__.getTimeBasedSegment)(timelineConverter, isDynamic, representation, time, frag.d, fTimescale, media, mediaRange, relativeIdx, frag.tManifest);
-        return true;
-      } else if (time >= lastSegmentTime * fTimescale - frag.d * 0.5) {
-        // same logic, if deviation is
-        // 50% of segment duration, segment is found if time is greater than or equal to (startTime of previous segment - half of the previous segment duration)
-        found = true;
-      }
-
-      return false;
-    });
-    return segment;
+  function getSegment(representation, index, requestedTime) {
+    return getSegmentByTime(representation, requestedTime);
   }
 
   function getSegmentByTime(representation, requestedTime) {
@@ -14291,8 +14336,7 @@ function TimelineSegmentsGetter(config, isDynamic) {
   }
 
   instance = {
-    getSegmentByIndex: getSegmentByIndex,
-    getSegmentByTime: getSegmentByTime,
+    getSegment: getSegment,
     getMediaFinishedInformation: getMediaFinishedInformation
   };
   return instance;
@@ -25804,8 +25848,10 @@ function BufferController(config) {
   }
 
   function _onPlaybackProgression() {
-    if (!replacingBuffer || type === _constants_Constants__WEBPACK_IMPORTED_MODULE_0__["default"].TEXT && textController.isTextEnabled()) {
-      _updateBufferLevel();
+    if (!replacingBuffer) {
+      if (type !== _constants_Constants__WEBPACK_IMPORTED_MODULE_0__["default"].TEXT || textController.isTextEnabled()) {
+        _updateBufferLevel();
+      }
     }
   }
 
@@ -25952,16 +25998,17 @@ function BufferController(config) {
 
   function checkIfSufficientBuffer() {
     // No need to check buffer if type is not audio or video (for example if several errors occur during text parsing, so that the buffer cannot be filled, no error must occur on video playback)
-    if (type !== _constants_Constants__WEBPACK_IMPORTED_MODULE_0__["default"].AUDIO && type !== _constants_Constants__WEBPACK_IMPORTED_MODULE_0__["default"].VIDEO) return; // When the player is working in low latency mode, the buffer is often below STALL_THRESHOLD.
-    // So, when in low latency mode, change dash.js behavior so it notifies a stall just when
-    // buffer reach 0 seconds
+    if (type !== _constants_Constants__WEBPACK_IMPORTED_MODULE_0__["default"].AUDIO && type !== _constants_Constants__WEBPACK_IMPORTED_MODULE_0__["default"].VIDEO) {
+      return;
+    } //Set stall threshold based on player mode
 
-    if ((!playbackController.getLowLatencyModeEnabled() && bufferLevel < settings.get().streaming.buffer.stallThreshold || bufferLevel === 0) && !isBufferingCompleted) {
+
+    var stallThreshold = playbackController.getLowLatencyModeEnabled() ? settings.get().streaming.buffer.lowLatencyStallThreshold : settings.get().streaming.buffer.stallThreshold;
+
+    if (bufferLevel <= stallThreshold && !isBufferingCompleted) {
       _notifyBufferStateChanged(_constants_MetricsConstants__WEBPACK_IMPORTED_MODULE_1__["default"].BUFFER_EMPTY);
-    } else {
-      if (isBufferingCompleted || bufferLevel >= settings.get().streaming.buffer.stallThreshold || playbackController.getLowLatencyModeEnabled() && bufferLevel > 0) {
-        _notifyBufferStateChanged(_constants_MetricsConstants__WEBPACK_IMPORTED_MODULE_1__["default"].BUFFER_LOADED);
-      }
+    } else if (isBufferingCompleted || bufferLevel > stallThreshold) {
+      _notifyBufferStateChanged(_constants_MetricsConstants__WEBPACK_IMPORTED_MODULE_1__["default"].BUFFER_LOADED);
     }
   }
 
@@ -26592,6 +26639,8 @@ function CatchupController() {
 
       var deltaLatency = _getLatencyDrift();
 
+      var deltaLatencyAbsolute = _getAbsoluteLatencyDrift();
+
       var liveThreshold = settings.get().streaming.liveCatchup.liveThreshold;
       var maxDrift = mediaPlayerModel.getCatchupMaxDrift(); // we reached the maxDrift. Do a seek
 
@@ -26600,7 +26649,7 @@ function CatchupController() {
         isCatchupSeekInProgress = true;
         playbackController.seekToCurrentLive(true, false);
       } // we're outside the liveThreshold. Give the client what they want
-      else if (!isNaN(liveThreshold) && liveThreshold > 0 && playbackController.getCurrentLiveLatency() - playbackController.getOriginalLiveDelay() > liveThreshold) {
+      else if (!isNaN(liveThreshold) && liveThreshold > 0 && deltaLatencyAbsolute > liveThreshold) {
         if (currentPlaybackRate > 1) {
           logger.info("[CatchupController]: Past live threshold, setting playback rate to 1.0");
           videoModel.setPlaybackRate(1.0);
@@ -26618,7 +26667,7 @@ function CatchupController() {
 
         if (_getCatchupMode() === _constants_Constants__WEBPACK_IMPORTED_MODULE_3__["default"].LIVE_CATCHUP_MODE_STEP) {
           // Custom playback control: Based on minimising playback rate changes
-          newRate = _calculateNewPlaybackRateStep(liveCatchupPlaybackRates, currentLiveLatency, targetLiveDelay, bufferLevel);
+          newRate = _calculateNewPlaybackRateStep(liveCatchupPlaybackRates, targetLiveDelay, bufferLevel);
         } else {
           // Default playback control: Based on target and current latency
           newRate = _calculateNewPlaybackRateDefault(liveCatchupPlaybackRates, currentLiveLatency, targetLiveDelay, bufferLevel);
@@ -26649,6 +26698,18 @@ function CatchupController() {
     return currentLiveLatency - targetLiveDelay;
   }
   /**
+   * Calculates the drift between the current latency and the absolute target latency specified in the service description or settings
+   * @return {number}
+   * @private
+   */
+
+
+  function _getAbsoluteLatencyDrift() {
+    var currentLiveLatency = playbackController.getCurrentLiveLatency();
+    var targetLiveDelay = playbackController.getOriginalLiveDelay();
+    return currentLiveLatency - targetLiveDelay;
+  }
+  /**
    * Checks whether the catchup mechanism should be enabled. We use different subfunctions here depending on the catchup mode.
    * @return {boolean}
    */
@@ -26656,7 +26717,7 @@ function CatchupController() {
 
   function _shouldStartCatchUp() {
     try {
-      if (playbackController.getTime() < 0 || isCatchupSeekInProgress) {
+      if (playbackController.getTime() <= 0 || isCatchupSeekInProgress) {
         return false;
       }
 
@@ -26741,10 +26802,10 @@ function CatchupController() {
 
   function _stepNeedToCatchUp() {
     try {
-      var currentLiveLatency = playbackController.getCurrentLiveLatency();
-      var targetLiveDelay = playbackController.getLiveDelay();
       var stepSettings = mediaPlayerModel.getCatchupStepSettings();
-      var deltaLatency = currentLiveLatency - targetLiveDelay; //If latency is outside of the acceptable window, consider a new speed
+
+      var deltaLatency = _getAbsoluteLatencyDrift(); //If latency is outside of the acceptable window, consider a new speed
+
 
       if (deltaLatency < stepSettings.start.min * -1 || deltaLatency > stepSettings.start.max) {
         logger.debug("[_stepNeedToCatchUp] latency offset ".concat(deltaLatency));
@@ -26866,17 +26927,18 @@ function CatchupController() {
   */
 
 
-  function _calculateNewPlaybackRateStep(liveCatchUpPlaybackRates, currentLiveLatency, liveDelay, bufferLevel) {
+  function _calculateNewPlaybackRateStep(liveCatchUpPlaybackRates, liveDelay, bufferLevel) {
     var newRate = 1.0;
     var stepSettings = mediaPlayerModel.getCatchupStepSettings(); // Only adjust playback rates if playback has not stalled
 
     if (!playbackStalled) {
-      var deltaLatency = currentLiveLatency - liveDelay; // Check if we need to need to speed up
+      var deltaLatency = _getAbsoluteLatencyDrift(); // Check if we need to need to speed up
 
-      if (deltaLatency > stepSettings.start.max && deltaLatency > 0) {
+
+      if (deltaLatency > stepSettings.stop.max && deltaLatency > 0) {
         newRate = 1 + liveCatchUpPlaybackRates.max;
       } // or slow down
-      else if (deltaLatency < stepSettings.start.min * -1 && deltaLatency < 0) {
+      else if (deltaLatency < stepSettings.stop.min * -1 && deltaLatency < 0) {
         newRate = 1 + liveCatchUpPlaybackRates.min;
       } // Check if we need to return to 1.0
 
@@ -28649,8 +28711,8 @@ function MediaController() {
       })[0];
       return matchLang && matchIndex && matchViewPoint && (matchRole || track.type === _constants_Constants__WEBPACK_IMPORTED_MODULE_0__["default"].AUDIO && isTrackActive) && matchAccessibility && matchAudioChannelConfiguration;
     } catch (e) {
-      return false;
       logger.error(e);
+      return false;
     }
   }
 
@@ -31772,7 +31834,18 @@ function StreamController() {
 
 
         var offset = settings.get().streaming.timeShiftBuffer.calcFromSegmentTimeline ? 0.1 : 0;
-        startTime = Math.max(startTime, dvrWindow.start + offset);
+        startTime = Math.max(startTime, dvrWindow.start + offset); // In hardware playback use optional maxDecoderRate setting to compensate for startup delay
+
+        var maxDecoderRate = settings.get().streaming.timeShiftBuffer.maxDecoderRate;
+
+        if (maxDecoderRate && !isNaN(maxDecoderRate)) {
+          var seektime = liveEdge - playbackController.getOriginalLiveDelay();
+          var segmentDuration = streams[0].getStreamInfo().manifestInfo.maxFragmentDuration;
+          var seektimeQuantised = segmentDuration * (1 + parseInt(seektime / segmentDuration));
+          var positionInSegment = seektimeQuantised - seektime;
+          logger.info("Overshoot start seek by ".concat(positionInSegment / maxDecoderRate, " to compensate for decoder."));
+          startTime += positionInSegment / maxDecoderRate;
+        }
       }
     } else {
       // For static stream, start by default at period start
@@ -32886,8 +32959,9 @@ function TimeSyncController() {
     } // Notify other classes
 
 
+    var artificialTimeOffsetToApply = settings.get().streaming.utcSynchronization.artificialTimeOffsetToApply;
     eventBus.trigger(_core_events_Events__WEBPACK_IMPORTED_MODULE_3__["default"].UPDATE_TIME_SYNC_OFFSET, {
-      offset: offset
+      offset: offset + artificialTimeOffsetToApply
     });
     eventBus.trigger(_core_events_Events__WEBPACK_IMPORTED_MODULE_3__["default"].TIME_SYNCHRONIZATION_COMPLETED);
   }
@@ -32933,8 +33007,9 @@ function TimeSyncController() {
     if (!_isOffsetDriftWithinThreshold(averageOffset)) {
       logger.debug("Completed background UTC sync. Setting client - server offset to ".concat(averageOffset));
       lastOffset = averageOffset;
+      var artificialTimeOffsetToApply = settings.get().streaming.utcSynchronization.artificialTimeOffsetToApply;
       eventBus.trigger(_core_events_Events__WEBPACK_IMPORTED_MODULE_3__["default"].UPDATE_TIME_SYNC_OFFSET, {
-        offset: lastOffset
+        offset: artificialTimeOffsetToApply + lastOffset
       });
     } else {
       logger.debug("Completed background UTC sync. Offset is within allowed threshold and is not adjusted.");
@@ -36877,13 +36952,25 @@ function VideoModel() {
     stalledStreams.push(type);
 
     if (settings.get().streaming.buffer.syntheticStallEvents.enabled && element && stalledStreams.length === 1 && (settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState || getReadyState() >= _constants_Constants__WEBPACK_IMPORTED_MODULE_4__["default"].VIDEO_ELEMENT_READY_STATES.HAVE_FUTURE_DATA)) {
-      logger.debug("emitting synthetic waiting event and halting playback with playback rate 0");
-      previousPlaybackRate = element.playbackRate;
-      setPlaybackRate(0, true); // Halt playback until nothing is stalled.
+      var emitSyntheticWaitingEvent = function emitSyntheticWaitingEvent() {
+        logger.debug("emitting synthetic waiting event and halting playback with playback rate 0");
+        previousPlaybackRate = element.playbackRate;
+        setPlaybackRate(0, true);
+        var event = document.createEvent('Event');
+        event.initEvent('waiting', true, false);
+        element.dispatchEvent(event);
+      };
 
-      var event = document.createEvent('Event');
-      event.initEvent('waiting', true, false);
-      element.dispatchEvent(event);
+      if (!element.paused) {
+        // Halt Playback until nothing is stalled
+        emitSyntheticWaitingEvent();
+      } else {
+        var event = 'playing';
+        element.addEventListener(event, function emitWaitOnPlay() {
+          if (stalledStreams.length === 1) emitSyntheticWaitingEvent();
+          element.removeEventListener(event, emitWaitOnPlay);
+        });
+      }
     }
   }
 
@@ -43528,6 +43615,16 @@ function TextController(config) {
     // Fragmented text tracks need the additional step of calling TextController.setTextTrack();
     allTracksAreDisabled = idx === -1;
 
+    if (allTracksAreDisabled) {
+      eventBus.trigger(_core_events_Events__WEBPACK_IMPORTED_MODULE_8__["default"].BUFFER_LEVEL_UPDATED, {
+        mediaType: _constants_Constants__WEBPACK_IMPORTED_MODULE_0__["default"].TEXT,
+        bufferLevel: -1
+      }, {
+        streamId: streamId,
+        mediaType: _constants_Constants__WEBPACK_IMPORTED_MODULE_0__["default"].TEXT
+      });
+    }
+
     if (allTracksAreDisabled && mediaController) {
       mediaController.saveTextSettingsDisabled();
     }
@@ -44401,7 +44498,7 @@ function TextTracks(config) {
   var videoModel = config.videoModel;
   var streamInfo = config.streamInfo;
   var settings = config.settings;
-  var instance, logger, Cue, textTrackQueue, nativeTrackElementArr, currentTrackIdx, actualVideoLeft, actualVideoTop, actualVideoWidth, actualVideoHeight, captionContainer, vttCaptionContainer, videoSizeCheckInterval, fullscreenAttribute, displayCCOnTop, previousISDState, topZIndex, resizeObserver;
+  var instance, logger, Cue, textTrackQueue, nativeTrackElementArr, currentTrackIdx, actualVideoLeft, actualVideoTop, actualVideoWidth, actualVideoHeight, captionContainer, vttCaptionContainer, videoSizeCheckInterval, fullscreenAttribute, displayCCOnTop, previousISDState, topZIndex, resizeObserver, hasRequestAnimationFrame;
 
   function setup() {
     logger = (0,_core_Debug__WEBPACK_IMPORTED_MODULE_5__["default"])(context).getInstance().getLogger(instance);
@@ -44426,6 +44523,7 @@ function TextTracks(config) {
     displayCCOnTop = false;
     topZIndex = 2147483647;
     previousISDState = null;
+    hasRequestAnimationFrame = 'requestAnimationFrame' in window;
 
     if (document.fullscreenElement !== undefined) {
       fullscreenAttribute = 'fullscreenElement'; // Standard and Edge
@@ -44745,41 +44843,39 @@ function TextTracks(config) {
 
   function _renderCaption(cue) {
     if (captionContainer) {
+      clearCaptionContainer.call(this);
       var finalCue = document.createElement('div');
       captionContainer.appendChild(finalCue);
       previousISDState = (0,imsc__WEBPACK_IMPORTED_MODULE_6__.renderHTML)(cue.isd, finalCue, function (src) {
         return _resolveImageSrc(cue, src);
-      }, captionContainer.clientHeight, captionContainer.clientWidth, false
-      /*displayForcedOnlyMode*/
-      , function (err) {
-        logger.info('renderCaption :', err); //TODO add ErrorHandler management
-      }, previousISDState, true
-      /*enableRollUp*/
-      );
+      }, captionContainer.clientHeight, captionContainer.clientWidth, settings.get().streaming.text.imsc.displayForcedOnlyMode, function (err) {
+        logger.info('renderCaption :', err);
+        /*TODO: add ErrorHandler management*/
+      }, previousISDState, settings.get().streaming.text.imsc.enableRollUp, settings.get().streaming.text.imsc.options);
       finalCue.id = cue.cueID;
       eventBus.trigger(_streaming_MediaPlayerEvents__WEBPACK_IMPORTED_MODULE_3__["default"].CAPTION_RENDERED, {
         captionDiv: finalCue,
         currentTrackIdx: currentTrackIdx
       });
     }
-  }
+  } // Check that a new cue immediately follows the previous cue
 
-  function _extendLastCue(cue, track) {
+
+  function _areCuesAdjacent(cue, prevCue) {
+    if (!prevCue) {
+      return false;
+    } // Check previous cue endTime with current cue startTime
+    // (should we consider an epsilon margin? for example to get around rounding issues)
+
+
+    return prevCue.endTime >= cue.startTime;
+  } // Check if cue content is identical. If it is, extend the previous cue.
+
+
+  function _extendLastCue(cue, prevCue) {
     if (!settings.get().streaming.text.extendSegmentedCues) {
       return false;
     }
-
-    if (!track.cues || track.cues.length === 0) {
-      return false;
-    }
-
-    var prevCue = track.cues[track.cues.length - 1]; // Check previous cue endTime with current cue startTime
-    // (should we consider an epsilon margin? for example to get around rounding issues)
-
-    if (prevCue.endTime < cue.startTime) {
-      return false;
-    } // Compare cues content
-
 
     if (!_cuesContentAreEqual(prevCue, cue, CUE_PROPS_TO_COMPARE)) {
       return false;
@@ -44850,7 +44946,26 @@ function TextTracks(config) {
 
               track.manualCueList.push(cue);
             } else {
-              if (!_extendLastCue(cue, track)) {
+              // Handle adjacent cues
+              var prevCue = void 0;
+
+              if (track.cues && track.cues.length !== 0) {
+                prevCue = track.cues[track.cues.length - 1];
+              }
+
+              if (_areCuesAdjacent(cue, prevCue)) {
+                if (!_extendLastCue(cue, prevCue)) {
+                  /* If cues are adjacent but not identical (extended), let the render function of the next cue 
+                   * clear up the captionsContainer so removal and appending are instantaneous.
+                   * Only do this for imsc subs (where isd is present).
+                   */
+                  if (prevCue.isd) {
+                    prevCue.onexit = function () {};
+                  }
+
+                  track.addCue(cue);
+                }
+              } else {
                 track.addCue(cue);
               }
             }
@@ -44899,9 +45014,18 @@ function TextTracks(config) {
     }
 
     cue.onenter = function () {
+      var _this = this;
+
       if (track.mode === _constants_Constants__WEBPACK_IMPORTED_MODULE_0__["default"].TEXT_SHOWING) {
         if (this.isd) {
-          _renderCaption(this);
+          if (hasRequestAnimationFrame) {
+            // Ensure everything in _renderCaption happens in the same frame
+            requestAnimationFrame(function () {
+              return _renderCaption(_this);
+            });
+          } else {
+            _renderCaption(this);
+          }
 
           logger.debug('Cue enter id:' + this.cueID);
         } else {
@@ -44915,7 +45039,8 @@ function TextTracks(config) {
           });
         }
       }
-    };
+    }; // For imsc subs, this could be reassigned to not do anything if there is a cue that immediately follows this one
+
 
     cue.onexit = function () {
       if (captionContainer) {
@@ -45087,7 +45212,7 @@ function TextTracks(config) {
   }
 
   function setCurrentTrackIdx(idx) {
-    var _this = this;
+    var _this2 = this;
 
     if (idx === currentTrackIdx) {
       return;
@@ -45107,7 +45232,7 @@ function TextTracks(config) {
 
       if (window.ResizeObserver) {
         resizeObserver = new window.ResizeObserver(function () {
-          checkVideoSize.call(_this, track, true);
+          checkVideoSize.call(_this2, track, true);
         });
         resizeObserver.observe(videoModel.getElement());
       } else {
@@ -62001,6 +62126,7 @@ exports.renderHTML = __webpack_require__(/*! ./html */ "./node_modules/imsc/src/
                 var rslt = [];
 
                 for (var i = 0; i < ffs.length; i++) {
+                    ffs[i] = ffs[i].trim();
 
                     if (ffs[i].charAt(0) !== "'" && ffs[i].charAt(0) !== '"') {
 
