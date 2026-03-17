@@ -58,6 +58,11 @@ function SegmentBaseGetter(config) {
         return mediaFinishedInformation;
     }
 
+    function getSegment(representation, index, requestedTime) {
+        if (index != null) return getSegmentByIndex(representation, index)
+        return getSegmentByTime(representation, requestedTime)
+    }
+
     function getSegmentByIndex(representation, index) {
         checkConfig();
 
@@ -127,8 +132,7 @@ function SegmentBaseGetter(config) {
     }
 
     instance = {
-        getSegmentByIndex,
-        getSegmentByTime,
+        getSegment,
         getMediaFinishedInformation
     };
 

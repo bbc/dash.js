@@ -233,17 +233,17 @@ function DashHandler(config) {
     }
 
 
-    function getSegmentRequestForTime(mediaInfo, representation, time) {
+    function getSegmentRequestForTime(mediaInfo, representation, timeToRequest) {
         let request = null;
 
         if (!representation || !representation.segmentInfoType) {
             return request;
         }
 
-        const segment = segmentsController.getSegmentByTime(representation, time);
+        const segment = segmentsController.getSegment(representation, null, timeToRequest);
         if (segment) {
             lastSegment = segment;
-            logger.debug('Index for time ' + time + ' is ' + segment.index);
+            logger.debug('Index for time ' + timeToRequest + ' is ' + segment.index);
             request = _getRequestForSegment(mediaInfo, segment);
         }
 
@@ -258,11 +258,13 @@ function DashHandler(config) {
      */
     function getNextSegmentRequestIdempotent(mediaInfo, representation) {
         let request = null;
+        let segmentDuration = representation.segmentDuration;
         let indexToRequest = lastSegment ? lastSegment.index + 1 : 0;
-        const segment = segmentsController.getSegmentByIndex(
+        let timeToRequest = lastSegment ? lastSegment.mediaStartTime + segmentDuration : 0;
+        const segment = segmentsController.getSegment(
             representation,
             indexToRequest,
-            lastSegment ? lastSegment.mediaStartTime : -1
+            timeToRequest
         );
         if (!segment) return null;
         request = _getRequestForSegment(mediaInfo, segment);
@@ -280,9 +282,11 @@ function DashHandler(config) {
             return null;
         }
 
+        let segmentDuration = representation.segmentDuration;
         let indexToRequest = lastSegment ? lastSegment.index + 1 : 0;
+        let timeToRequest = lastSegment ? lastSegment.mediaStartTime + segmentDuration : 0;
 
-        return _getRequest(mediaInfo, representation, indexToRequest);
+        return _getRequest(mediaInfo, representation, indexToRequest, timeToRequest);
     }
 
     function repeatSegmentRequest(mediaInfo, representation) {
@@ -291,13 +295,14 @@ function DashHandler(config) {
         }
 
         let indexToRequest = lastSegment ? lastSegment.index : 0;
+        let timeToRequest = lastSegment ? lastSegment.mediaStartTime : 0;
 
-        return _getRequest(mediaInfo, representation, indexToRequest);
+        return _getRequest(mediaInfo, representation, indexToRequest, timeToRequest);
     }
 
-    function _getRequest(mediaInfo, representation, indexToRequest) {
+    function _getRequest(mediaInfo, representation, indexToRequest, timeToRequest) {
         let request = null;
-        const segment = segmentsController.getSegmentByIndex(representation, indexToRequest, lastSegment ? lastSegment.mediaStartTime : -1);
+        const segment = segmentsController.getSegment(representation, indexToRequest, timeToRequest);
 
         // No segment found
         if (!segment) {

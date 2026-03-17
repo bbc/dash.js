@@ -62,6 +62,11 @@ function TemplateSegmentsGetter(config, isDynamic) {
         return mediaFinishedInformation;
     }
 
+    function getSegment(representation, index, requestedTime) {
+        if (index != null) return getSegmentByIndex(representation, index)
+        return getSegmentByTime(representation, requestedTime)
+    }
+
     function getSegmentByIndex(representation, index) {
         checkConfig();
 
@@ -108,8 +113,7 @@ function TemplateSegmentsGetter(config, isDynamic) {
     }
 
     instance = {
-        getSegmentByIndex,
-        getSegmentByTime,
+        getSegment,
         getMediaFinishedInformation
     };
 
