@@ -258,9 +258,8 @@ function DashHandler(config) {
      */
     function getNextSegmentRequestIdempotent(mediaInfo, representation) {
         let request = null;
-        let segmentDuration = representation.segmentDuration;
         let indexToRequest = lastSegment ? lastSegment.index + 1 : 0;
-        let timeToRequest = lastSegment ? lastSegment.mediaStartTime + segmentDuration : 0;
+        let timeToRequest = lastSegment ? lastSegment.mediaStartTime + lastSegment.duration : 0;
         const segment = segmentsController.getSegment(
             representation,
             indexToRequest,
@@ -282,9 +281,8 @@ function DashHandler(config) {
             return null;
         }
 
-        let segmentDuration = representation.segmentDuration;
         let indexToRequest = lastSegment ? lastSegment.index + 1 : 0;
-        let timeToRequest = lastSegment ? lastSegment.mediaStartTime + segmentDuration : 0;
+        let timeToRequest = lastSegment ? lastSegment.mediaStartTime + lastSegment.duration : 0;
 
         return _getRequest(mediaInfo, representation, indexToRequest, timeToRequest);
     }
