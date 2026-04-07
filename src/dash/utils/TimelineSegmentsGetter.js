@@ -187,49 +187,8 @@ function TimelineSegmentsGetter(config, isDynamic) {
         return Math.max(Math.ceil((repeatEndTime - scaledTime) / (frag.d / fTimescale)) - 1, 0);
     }
 
-
-    function getSegmentByIndex(representation, index, lastSegmentTime) {
-        checkConfig();
-
-        if (!representation) {
-            return null;
-        }
-
-        let segment = null;
-        let found = false;
-
-        iterateSegments(representation, function (time, base, list, frag, fTimescale, relativeIdx, i) {
-            if (found || lastSegmentTime < 0) {
-                let media = base.media;
-                let mediaRange = frag.mediaRange;
-
-                if (list) {
-                    media = list[i].media || '';
-                    mediaRange = list[i].mediaRange;
-                }
-
-                segment = getTimeBasedSegment(
-                    timelineConverter,
-                    isDynamic,
-                    representation,
-                    time,
-                    frag.d,
-                    fTimescale,
-                    media,
-                    mediaRange,
-                    relativeIdx,
-                    frag.tManifest);
-
-                return true;
-            } else if (time >= (lastSegmentTime * fTimescale) - (frag.d * 0.5)) { // same logic, if deviation is
-                // 50% of segment duration, segment is found if time is greater than or equal to (startTime of previous segment - half of the previous segment duration)
-                found = true;
-            }
-
-            return false;
-        });
-
-        return segment;
+    function getSegment(representation, index, requestedTime) {
+        return getSegmentByTime(representation, requestedTime)
     }
 
     function getSegmentByTime(representation, requestedTime) {
@@ -286,8 +245,7 @@ function TimelineSegmentsGetter(config, isDynamic) {
     }
 
     instance = {
-        getSegmentByIndex,
-        getSegmentByTime,
+        getSegment,
         getMediaFinishedInformation
     };
 

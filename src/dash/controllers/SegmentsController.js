@@ -81,14 +81,9 @@ function SegmentsController(config) {
         return representation ? representation.segments ? getters[dashConstants.SEGMENT_BASE] : getters[representation.segmentInfoType] : null;
     }
 
-    function getSegmentByIndex(representation, index, lastSegmentTime) {
+    function getSegment(representation, index, requestedTime) {
         const getter = getSegmentsGetter(representation);
-        return getter ? getter.getSegmentByIndex(representation, index, lastSegmentTime) : null;
-    }
-
-    function getSegmentByTime(representation, time) {
-        const getter = getSegmentsGetter(representation);
-        return getter ? getter.getSegmentByTime(representation, time) : null;
+        return getter ? getter.getSegment(representation, index, requestedTime) : null;
     }
 
     function getMediaFinishedInformation(representation) {
@@ -103,8 +98,7 @@ function SegmentsController(config) {
         initialize,
         updateInitData,
         updateSegmentData,
-        getSegmentByIndex,
-        getSegmentByTime,
+        getSegment,
         getMediaFinishedInformation
     };
 
