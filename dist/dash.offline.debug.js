@@ -1365,8 +1365,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *            },
  *            timeShiftBuffer: {
  *                calcFromSegmentTimeline: false,
- *                fallbackToSegmentTimeline: true,
- *                maxDecoderRate: NaN
+ *                fallbackToSegmentTimeline: true
  *            },
  *            metrics: {
  *              maxListDepth: 100
@@ -1395,7 +1394,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *                hybridSwitchBufferTime: NaN,
  *                longFormContentDurationThreshold: 600,
  *                stallThreshold: 0.3,
- *                lowLatencyStallThreshold: 0.3,
  *                useAppendWindow: true,
  *                setStallState: true,
  *                avoidCurrentTimeRangePruning: false,
@@ -1430,8 +1428,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *                defaultTimingSource: {
  *                    scheme: 'urn:mpeg:dash:utc:http-xsdate:2014',
  *                    value: 'http://time.akamai.com/?iso&ms'
- *                },
- *                artificialTimeOffsetToApply: 0
+ *                }
  *            },
  *            scheduling: {
  *                defaultTimeout: 500,
@@ -1453,7 +1450,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *                  stop: { min: NaN, max: NaN }
  *                },
  *                playbackBufferMin: 0.5,
- *                liveThreshold: -1,
+ *                liveThreshold: 30,
  *                enabled: null,
  *                mode: Constants.LIVE_CATCHUP_MODE_DEFAULT
  *            },
@@ -1533,9 +1530,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *                mode: Constants.CMCD_MODE_QUERY,
  *                enabledKeys: ['br', 'd', 'ot', 'tb' , 'bl', 'dl', 'mtp', 'nor', 'nrr', 'su' , 'bs', 'rtp' , 'cid', 'pr', 'sf', 'sid', 'st', 'v']
  *            },
- *            dvbReporting: {
- *                reportingUrl: null,
- *            },
  *            cmsd: {
  *                enabled: false,
  *                abr: {
@@ -1556,11 +1550,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * @typedef {Object} TimeShiftBuffer
  * @property {boolean} [calcFromSegmentTimeline=false]
  * Enable calculation of the DVR window for SegmentTimeline manifests based on the entries in \<SegmentTimeline\>.
- * @property {boolean} [fallbackToSegmentTimeline=true]
+ *  * @property {boolean} [fallbackToSegmentTimeline=true]
  * In case the MPD uses \<SegmentTimeline\ and no segment is found within the DVR window the DVR window is calculated based on the entries in \<SegmentTimeline\>.
- * @property {number} [maxDecoderRate=NaN]
- * The maximum rate your decoder can run at, can be used to overshoot the startup seek in anticpation of delay in hardware e.g.) TVs
-*/
+ */
 
 /**
  * @typedef {Object} LiveDelay
@@ -1639,15 +1631,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * When the time is set higher than the default you will have to wait longer to see automatic bitrate switches but will have a larger buffer which will increase stability.
  * @property {number} [stallThreshold=0.3]
  * Stall threshold used in BufferController.js to determine whether a track should still be changed and which buffer range to prune.
- * @property {number} [lowLatencyStallThreshold=0.3]
- * Low Latency stall threshold used in BufferController.js to determine whether a track should still be changed and which buffer range to prune. 
  * @property {boolean} [useAppendWindow=true]
  * Specifies if the appendWindow attributes of the MSE SourceBuffers should be set according to content duration from manifest.
  * @property {boolean} [setStallState=true]
  * Specifies if we record stalled streams once the stall threshold is reached
  * @property {module:Settings~SyntheticStallSettings} [syntheticStallEvents]
  * Specified if we fire manual stall events once the stall threshold is reached
- * 
  * @property {boolean} [avoidCurrentTimeRangePruning=false]
  * Avoids pruning of the buffered range that contains the current playback time.
  *
@@ -1790,9 +1779,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  *
  * @property {object} [defaultTimingSource={scheme:'urn:mpeg:dash:utc:http-xsdate:2014',value: 'http://time.akamai.com/?iso&ms'}]
  * The default timing source to be used. The timing sources in the MPD take precedence over this one.
- * 
- * @property {number} [artificialTimeOffsetToApply=0]
- * The offset defined in milliseconds that is applied on top of the offset that was derived after the time synchronization.
  */
 
 /**
@@ -1811,28 +1797,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * Enable/disable subtitle rendering by default.
  * @property {boolean} [extendSegmentedCues=true]
  * Enable/disable patching of segmented cues in order to merge as a single cue by extending cue end time.
- * @property {boolean} [imsc.displayForcedOnlyMode=false]
- * Enable/disable forced only mode in IMSC captions.
- * When true, only those captions where itts:forcedDisplay="true" will be displayed.
- * @property {boolean} [imsc.enableRollUp=true]
- * Enable/disable rollUp style display of IMSC captions.
- * @property {object} [imsc.options]
- * IMSC styling options - See the renderHtml function of imscJS for full details 
- * @property {number} [imsc.options.sizeAdjust]
- * IMSC styling option - scales the text size and line padding
- * @property {number} [imsc.options.lineHeightAdjust]
- * IMSC styling option - scales the line height
- * @property {number} [imsc.options.backgroundOpacityScale]
- * IMSC styling option - scales the backgroundColor opacity
- * @property {string} [imsc.options.fontFamily]
- * IMSC styling option - comma-separated list of font family values to use, if present.
- * @property {number} [imsc.options.colorOpacityScale]
- * IMSC styling option - opacity override on text color
- * @property {number} [imsc.options.regionOpacityScale]
- * IMSC styling option - scales the region opacity
- * @property {string} [imsc.options.textOutline]
- * IMSC styling option - textOutline value to use, if present
- * @property {object} [webvtt.customRenderingEnabled=false]
+ * @property {object} [webvtt={customRenderingEnabled=false}]
  * Enables the custom rendering for WebVTT captions. For details refer to the "Subtitles and Captions" sample section of dash.js.
  * Custom WebVTT rendering requires the external library vtt.js that can be found in the contrib folder.
  */
@@ -1878,7 +1843,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * @property {number} [playbackBufferMin=0.5]
  * Use this parameter to specify the minimum buffer which is used for LoL+ based playback rate reduction.
  *
- * @property {boolean} [liveThreshold=-1]
+ * @property {boolean} [liveThreshold=30]
  * How far in seconds the client has to be behind the absolute target for the catchup controller to attempt catching up. Disabled by setting to -1
  *
  * @property {boolean} [enabled=null]
@@ -2071,12 +2036,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  */
 
 /**
- * @typedef {Object} module:Settings~DvbReportingSettings
- * @property {string} [reportingUrl]
- * Overide DVB reporting url.
- */
-
-/**
  * @typedef {Object} module:Settings~CmsdSettings
  * @property {boolean} [enabled=false]
  * Enable or disable the CMSD response headers parsing.
@@ -2207,8 +2166,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * Adaptive Bitrate algorithm related settings.
  * @property {module:Settings~CmcdSettings} cmcd
  * Settings related to Common Media Client Data reporting.
- * @property {module:Settings~DvbReportingSettings} dvbReporting
- * Settings related to Common Media Client Data reporting.
  * @property {module:Settings~CmsdSettings} cmsd
  * Settings related to Common Media Server Data parsing.
  */
@@ -2262,8 +2219,7 @@ function Settings() {
       },
       timeShiftBuffer: {
         calcFromSegmentTimeline: false,
-        fallbackToSegmentTimeline: true,
-        maxDecoderRate: null
+        fallbackToSegmentTimeline: true
       },
       metrics: {
         maxListDepth: 100
@@ -2292,7 +2248,6 @@ function Settings() {
         hybridSwitchBufferTime: NaN,
         longFormContentDurationThreshold: 600,
         stallThreshold: 0.3,
-        lowLatencyStallThreshold: 0.3,
         useAppendWindow: true,
         setStallState: true,
         avoidCurrentTimeRangePruning: false,
@@ -2326,8 +2281,7 @@ function Settings() {
         defaultTimingSource: {
           scheme: 'urn:mpeg:dash:utc:http-xsdate:2014',
           value: 'https://time.akamai.com/?iso&ms'
-        },
-        artificialTimeOffsetToApply: 0
+        }
       },
       scheduling: {
         defaultTimeout: 500,
@@ -2337,19 +2291,6 @@ function Settings() {
       text: {
         defaultEnabled: true,
         extendSegmentedCues: true,
-        imsc: {
-          displayForcedOnlyMode: false,
-          enableRollUp: true,
-          options: {
-            sizeAdjust: 1,
-            lineHeightAdjust: 1,
-            backgroundOpacityScale: null,
-            fontFamily: null,
-            colorOpacityScale: 1,
-            regionOpacityScale: null,
-            textOutline: null
-          }
-        },
         webvtt: {
           customRenderingEnabled: false
         }
@@ -2371,7 +2312,7 @@ function Settings() {
           }
         },
         playbackBufferMin: 0.5,
-        liveThreshold: -1,
+        liveThreshold: 30,
         enabled: null,
         mode: _streaming_constants_Constants__WEBPACK_IMPORTED_MODULE_3__["default"].LIVE_CATCHUP_MODE_DEFAULT
       },
@@ -2455,9 +2396,6 @@ function Settings() {
         rtpSafetyFactor: 5,
         mode: _streaming_constants_Constants__WEBPACK_IMPORTED_MODULE_3__["default"].CMCD_MODE_QUERY,
         enabledKeys: ['br', 'd', 'ot', 'tb', 'bl', 'dl', 'mtp', 'nor', 'nrr', 'su', 'bs', 'rtp', 'cid', 'pr', 'sf', 'sid', 'st', 'v']
-      },
-      dvbReporting: {
-        reportingUrl: null
       },
       cmsd: {
         enabled: false,
@@ -3614,18 +3552,18 @@ function DashHandler(config) {
     return !!(isDynamicManifest && representation.adaptation.period.nextPeriodId && representation.segmentInfoType === _constants_DashConstants__WEBPACK_IMPORTED_MODULE_5__["default"].SEGMENT_TIMELINE && representation.mediaFinishedInformation && !isNaN(representation.mediaFinishedInformation.mediaTimeOfLastSignaledSegment) && lastSegment && !isNaN(lastSegment.mediaStartTime) && !isNaN(lastSegment.duration) && lastSegment.mediaStartTime + lastSegment.duration >= representation.mediaFinishedInformation.mediaTimeOfLastSignaledSegment - 0.05);
   }
 
-  function getSegmentRequestForTime(mediaInfo, representation, timeToRequest) {
+  function getSegmentRequestForTime(mediaInfo, representation, time) {
     var request = null;
 
     if (!representation || !representation.segmentInfoType) {
       return request;
     }
 
-    var segment = segmentsController.getSegment(representation, null, timeToRequest);
+    var segment = segmentsController.getSegmentByTime(representation, time);
 
     if (segment) {
       lastSegment = segment;
-      logger.debug('Index for time ' + timeToRequest + ' is ' + segment.index);
+      logger.debug('Index for time ' + time + ' is ' + segment.index);
       request = _getRequestForSegment(mediaInfo, segment);
     }
 
@@ -3641,10 +3579,8 @@ function DashHandler(config) {
 
   function getNextSegmentRequestIdempotent(mediaInfo, representation) {
     var request = null;
-    var segmentDuration = representation.segmentDuration;
     var indexToRequest = lastSegment ? lastSegment.index + 1 : 0;
-    var timeToRequest = lastSegment ? lastSegment.mediaStartTime + segmentDuration : 0;
-    var segment = segmentsController.getSegment(representation, indexToRequest, timeToRequest);
+    var segment = segmentsController.getSegmentByIndex(representation, indexToRequest, lastSegment ? lastSegment.mediaStartTime : -1);
     if (!segment) return null;
     request = _getRequestForSegment(mediaInfo, segment);
     return request;
@@ -3662,10 +3598,8 @@ function DashHandler(config) {
       return null;
     }
 
-    var segmentDuration = representation.segmentDuration;
     var indexToRequest = lastSegment ? lastSegment.index + 1 : 0;
-    var timeToRequest = lastSegment ? lastSegment.mediaStartTime + segmentDuration : 0;
-    return _getRequest(mediaInfo, representation, indexToRequest, timeToRequest);
+    return _getRequest(mediaInfo, representation, indexToRequest);
   }
 
   function repeatSegmentRequest(mediaInfo, representation) {
@@ -3674,13 +3608,12 @@ function DashHandler(config) {
     }
 
     var indexToRequest = lastSegment ? lastSegment.index : 0;
-    var timeToRequest = lastSegment ? lastSegment.mediaStartTime : 0;
-    return _getRequest(mediaInfo, representation, indexToRequest, timeToRequest);
+    return _getRequest(mediaInfo, representation, indexToRequest);
   }
 
-  function _getRequest(mediaInfo, representation, indexToRequest, timeToRequest) {
+  function _getRequest(mediaInfo, representation, indexToRequest) {
     var request = null;
-    var segment = segmentsController.getSegment(representation, indexToRequest, timeToRequest); // No segment found
+    var segment = segmentsController.getSegmentByIndex(representation, indexToRequest, lastSegment ? lastSegment.mediaStartTime : -1); // No segment found
 
     if (!segment) {
       // Dynamic manifest there might be something available in the next iteration
@@ -4461,9 +4394,14 @@ function SegmentsController(config) {
     return representation ? representation.segments ? getters[dashConstants.SEGMENT_BASE] : getters[representation.segmentInfoType] : null;
   }
 
-  function getSegment(representation, index, requestedTime) {
+  function getSegmentByIndex(representation, index, lastSegmentTime) {
     var getter = getSegmentsGetter(representation);
-    return getter ? getter.getSegment(representation, index, requestedTime) : null;
+    return getter ? getter.getSegmentByIndex(representation, index, lastSegmentTime) : null;
+  }
+
+  function getSegmentByTime(representation, time) {
+    var getter = getSegmentsGetter(representation);
+    return getter ? getter.getSegmentByTime(representation, time) : null;
   }
 
   function getMediaFinishedInformation(representation) {
@@ -4478,7 +4416,8 @@ function SegmentsController(config) {
     initialize: initialize,
     updateInitData: updateInitData,
     updateSegmentData: updateSegmentData,
-    getSegment: getSegment,
+    getSegmentByIndex: getSegmentByIndex,
+    getSegmentByTime: getSegmentByTime,
     getMediaFinishedInformation: getMediaFinishedInformation
   };
   setup();
@@ -7268,11 +7207,6 @@ function ListSegmentsGetter(config, isDynamic) {
     return mediaFinishedInformation;
   }
 
-  function getSegment(representation, index, requestedTime) {
-    if (index != null) return getSegmentByIndex(representation, index);
-    return getSegmentByTime(representation, requestedTime);
-  }
-
   function getSegmentByIndex(representation, index) {
     checkConfig();
 
@@ -7321,7 +7255,8 @@ function ListSegmentsGetter(config, isDynamic) {
   }
 
   instance = {
-    getSegment: getSegment,
+    getSegmentByIndex: getSegmentByIndex,
+    getSegmentByTime: getSegmentByTime,
     getMediaFinishedInformation: getMediaFinishedInformation
   };
   return instance;
@@ -7401,11 +7336,6 @@ function SegmentBaseGetter(config) {
     return mediaFinishedInformation;
   }
 
-  function getSegment(representation, index, requestedTime) {
-    if (index != null) return getSegmentByIndex(representation, index);
-    return getSegmentByTime(representation, requestedTime);
-  }
-
   function getSegmentByIndex(representation, index) {
     checkConfig();
 
@@ -7469,7 +7399,8 @@ function SegmentBaseGetter(config) {
   }
 
   instance = {
-    getSegment: getSegment,
+    getSegmentByIndex: getSegmentByIndex,
+    getSegmentByTime: getSegmentByTime,
     getMediaFinishedInformation: getMediaFinishedInformation
   };
   return instance;
@@ -7784,11 +7715,6 @@ function TemplateSegmentsGetter(config, isDynamic) {
     return mediaFinishedInformation;
   }
 
-  function getSegment(representation, index, requestedTime) {
-    if (index != null) return getSegmentByIndex(representation, index);
-    return getSegmentByTime(representation, requestedTime);
-  }
-
   function getSegmentByIndex(representation, index) {
     checkConfig();
 
@@ -7832,7 +7758,8 @@ function TemplateSegmentsGetter(config, isDynamic) {
   }
 
   instance = {
-    getSegment: getSegment,
+    getSegmentByIndex: getSegmentByIndex,
+    getSegmentByTime: getSegmentByTime,
     getMediaFinishedInformation: getMediaFinishedInformation
   };
   return instance;
@@ -8023,8 +7950,36 @@ function TimelineSegmentsGetter(config, isDynamic) {
     return Math.max(Math.ceil((repeatEndTime - scaledTime) / (frag.d / fTimescale)) - 1, 0);
   }
 
-  function getSegment(representation, index, requestedTime) {
-    return getSegmentByTime(representation, requestedTime);
+  function getSegmentByIndex(representation, index, lastSegmentTime) {
+    checkConfig();
+
+    if (!representation) {
+      return null;
+    }
+
+    var segment = null;
+    var found = false;
+    iterateSegments(representation, function (time, base, list, frag, fTimescale, relativeIdx, i) {
+      if (found || lastSegmentTime < 0) {
+        var media = base.media;
+        var mediaRange = frag.mediaRange;
+
+        if (list) {
+          media = list[i].media || '';
+          mediaRange = list[i].mediaRange;
+        }
+
+        segment = (0,_SegmentsUtils__WEBPACK_IMPORTED_MODULE_2__.getTimeBasedSegment)(timelineConverter, isDynamic, representation, time, frag.d, fTimescale, media, mediaRange, relativeIdx, frag.tManifest);
+        return true;
+      } else if (time >= lastSegmentTime * fTimescale - frag.d * 0.5) {
+        // same logic, if deviation is
+        // 50% of segment duration, segment is found if time is greater than or equal to (startTime of previous segment - half of the previous segment duration)
+        found = true;
+      }
+
+      return false;
+    });
+    return segment;
   }
 
   function getSegmentByTime(representation, requestedTime) {
@@ -8069,7 +8024,8 @@ function TimelineSegmentsGetter(config, isDynamic) {
   }
 
   instance = {
-    getSegment: getSegment,
+    getSegmentByIndex: getSegmentByIndex,
+    getSegmentByTime: getSegmentByTime,
     getMediaFinishedInformation: getMediaFinishedInformation
   };
   return instance;
