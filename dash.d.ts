@@ -1016,8 +1016,7 @@ declare namespace dashjs {
                 defaultTimingSource?: {
                     scheme?: string,
                     value?: string
-                },
-                artificialTimeOffsetToApply?: number
+                }
             },
             scheduling?: {
                 defaultTimeout?: number,
