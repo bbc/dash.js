@@ -631,8 +631,7 @@ function AbrController() {
                 newIdx > 0 &&
                 representation[newIdx] &&
                 scaledWidth < representation[newIdx].width &&
-                scaledWidth - representation[newIdx - 1].width < representation[newIdx].width - scaledWidth &&
-                representation[newIdx - 1].bandwidth >= portalLimitMinimum * 1000
+                scaledWidth - representation[newIdx - 1].width < representation[newIdx].width - scaledWidth
             ) {
                 newIdx = newIdx - 1;
             }
@@ -640,6 +639,10 @@ function AbrController() {
             // Make sure that in case of multiple representation elements have same
             // resolution, every such element is included
             while (newIdx < representation.length - 1 && representation[newIdx].width === representation[newIdx + 1].width) {
+                newIdx = newIdx + 1;
+            }
+
+            while (newIdx + 1 <= idx && newIdx + 1 < representation.length && representation[newIdx + 1].bandwidth < portalLimitMinimum * 1000) {
                 newIdx = newIdx + 1;
             }
         }
