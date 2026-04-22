@@ -76,8 +76,7 @@ import Events from './events/Events';
  *            },
  *            timeShiftBuffer: {
  *                calcFromSegmentTimeline: false,
- *                fallbackToSegmentTimeline: true,
- *                maxDecoderRate: NaN
+ *                fallbackToSegmentTimeline: true
  *            },
  *            metrics: {
  *              maxListDepth: 100
@@ -269,8 +268,6 @@ import Events from './events/Events';
  * Enable calculation of the DVR window for SegmentTimeline manifests based on the entries in \<SegmentTimeline\>.
  * @property {boolean} [fallbackToSegmentTimeline=true]
  * In case the MPD uses \<SegmentTimeline\ and no segment is found within the DVR window the DVR window is calculated based on the entries in \<SegmentTimeline\>.
- * @property {number} [maxDecoderRate=NaN]
- * The maximum rate your decoder can run at, can be used to overshoot the startup seek in anticpation of delay in hardware e.g.) TVs
 */
 
 /**
@@ -972,8 +969,7 @@ function Settings() {
             },
             timeShiftBuffer: {
                 calcFromSegmentTimeline: false,
-                fallbackToSegmentTimeline: true,
-                maxDecoderRate: null
+                fallbackToSegmentTimeline: true
             },
             metrics: {
                 maxListDepth: 100
