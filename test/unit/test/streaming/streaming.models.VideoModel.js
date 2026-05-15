@@ -39,6 +39,87 @@ describe('VideoModel', () => {
         });
     });
 
+    describe('setCurrentTime()', () => {
+        describe('seekWithoutReadyStateCheck disabled (default)', () => {
+            it('Should not set currentTime immediately when readyState is below HAVE_METADATA', () => {
+                videoElementMock.currentTime = 0;
+                videoElementMock.readyState = Constants.VIDEO_ELEMENT_READY_STATES.HAVE_NOTHING;
+
+                videoModel.setCurrentTime(10, false);
+
+                // readyState too low — time must not have been applied yet
+                expect(videoElementMock.currentTime).to.equal(0);
+            });
+
+            it('Should set currentTime synchronously when readyState is already HAVE_METADATA or above', () => {
+                videoElementMock.currentTime = 0;
+                videoElementMock.readyState = Constants.VIDEO_ELEMENT_READY_STATES.HAVE_METADATA;
+
+                videoModel.setCurrentTime(10, false);
+
+                expect(videoElementMock.currentTime).to.equal(10);
+            });
+
+            it('Should apply a deferred seek once the loadedmetadata event fires', () => {
+                videoElementMock.currentTime = 0;
+                videoElementMock.readyState = Constants.VIDEO_ELEMENT_READY_STATES.HAVE_NOTHING;
+
+                videoModel.setCurrentTime(20, false);
+                expect(videoElementMock.currentTime).to.equal(0);
+
+                // Simulate readyState reaching HAVE_METADATA and firing the event
+                videoElementMock.readyState = Constants.VIDEO_ELEMENT_READY_STATES.HAVE_METADATA;
+                videoElementMock.dispatchEvent({ type: 'loadedmetadata' });
+
+                expect(videoElementMock.currentTime).to.equal(20);
+            });
+
+            it('Should cancel a pending deferred seek when setCurrentTime is called a second time', () => {
+                videoElementMock.currentTime = 0;
+                videoElementMock.readyState = Constants.VIDEO_ELEMENT_READY_STATES.HAVE_NOTHING;
+
+                // First seek — deferred
+                videoModel.setCurrentTime(20, false);
+                // Second seek before the event fires — should supersede the first
+                videoModel.setCurrentTime(30, false);
+
+                videoElementMock.readyState = Constants.VIDEO_ELEMENT_READY_STATES.HAVE_METADATA;
+                videoElementMock.dispatchEvent({ type: 'loadedmetadata' });
+
+                expect(videoElementMock.currentTime).to.equal(30);
+            });
+        });
+
+        describe('seekWithoutReadyStateCheck enabled', () => {
+            beforeEach(() => {
+                settings.update({ streaming: { seekWithoutReadyStateCheck: true } });
+                videoModel.setConfig({ settings });
+            });
+
+            it('Should set currentTime immediately regardless of readyState', () => {
+                videoElementMock.currentTime = 0;
+                videoElementMock.readyState = Constants.VIDEO_ELEMENT_READY_STATES.HAVE_NOTHING;
+
+                videoModel.setCurrentTime(15, false);
+
+                expect(videoElementMock.currentTime).to.equal(15);
+            });
+
+            it('Should not register a loadedmetadata listener when bypassing readyState check', () => {
+                videoElementMock.currentTime = 0;
+                videoElementMock.readyState = Constants.VIDEO_ELEMENT_READY_STATES.HAVE_NOTHING;
+
+                videoModel.setCurrentTime(15, false);
+
+                // Firing the event after the seek should not re-apply or change currentTime
+                videoElementMock.currentTime = 0;
+                videoElementMock.dispatchEvent({ type: 'loadedmetadata' });
+
+                expect(videoElementMock.currentTime).to.equal(0);
+            });
+        });
+    });
+
     describe('setStallState()', () => {        
         describe('syntheticStallEvents enabled', () => {            
             beforeEach(() => {
