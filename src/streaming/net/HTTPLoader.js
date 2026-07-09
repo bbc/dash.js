@@ -362,7 +362,8 @@ function HTTPLoader(cfg) {
             ontimeout: ontimeout,
             loader: loader,
             timeout: requestTimeout,
-            headers: headers
+            headers: headers,
+            startTime: new Date().toISOString()
         };
 
         // Adds the ability to delay single fragment loading time to control buffer.
