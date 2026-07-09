@@ -133,8 +133,10 @@ function FetchLoader(cfg) {
             .then(() => {
                 let markBeforeFetch = Date.now();
 
-                console.log(`RnD: Fetch Request URL ${httpRequest.url.split('?')[0]}`)
-                console.log(`RnD: Segment ${httpRequest.url.split('?')[0]?.split('/')[-1]}`)
+                const requestNoQuery = httpRequest.url.split('?')[0]
+                const requestUrlParts = requestNoQuery.split('/')
+                console.log(`RnD: Fetch Request URL ${requestNoQuery}`)
+                console.log(`RnD: Segment ${requestUrlParts[requestUrlParts.length]}`)
 
                 fetch(httpRequest.url, reqOptions).then(function (response) {
                     if (!httpRequest.response) {
