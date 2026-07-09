@@ -171,8 +171,9 @@ function HTTPLoader(cfg) {
                     }
 
                     remainingAttempts--;
+                    console.log(`RnD: Attempts left after this ${remainingAttempts}, interval used: ${mediaPlayerModel.getRetryIntervalsForType(request.type)}`)
                     let retryRequest = { config: config };
-                    console.log(`RnD: Retry request config ${JSON.stringify(retryRequest)}`)
+
                     retryRequests.push(retryRequest);
                     retryRequest.timeout = setTimeout(function () {
                         if (retryRequests.indexOf(retryRequest) === -1) {
