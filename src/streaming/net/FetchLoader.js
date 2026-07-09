@@ -133,6 +133,7 @@ function FetchLoader(cfg) {
             .then(() => {
                 let markBeforeFetch = Date.now();
 
+                console.log(`RnD: Fetch Request URL ${httpRequest.url}`)
                 fetch(httpRequest.url, reqOptions).then(function (response) {
                     if (!httpRequest.response) {
                         httpRequest.response = {};

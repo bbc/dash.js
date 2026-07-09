@@ -30,7 +30,7 @@
  */
 import XHRLoader from './XHRLoader';
 import FetchLoader from './FetchLoader';
-import {HTTPRequest} from '../vo/metrics/HTTPRequest';
+import { HTTPRequest } from '../vo/metrics/HTTPRequest';
 import FactoryMaker from '../../core/FactoryMaker';
 import DashJSError from '../vo/DashJSError';
 import CmcdModel from '../models/CmcdModel';
@@ -114,7 +114,7 @@ function HTTPLoader(cfg) {
             throw new Error('config object is not correct or missing');
         }
 
-        const addHttpRequestMetric = function(success) {
+        const addHttpRequestMetric = function (success) {
             request.requestStartDate = requestStartTime;
             request.requestEndDate = new Date();
             request.firstByteDate = request.firstByteDate || requestStartTime;
@@ -172,6 +172,7 @@ function HTTPLoader(cfg) {
 
                     remainingAttempts--;
                     let retryRequest = { config: config };
+                    console.log(`RnD: Retry request config ${JSON.stringify(retryRequest)}`)
                     retryRequests.push(retryRequest);
                     retryRequest.timeout = setTimeout(function () {
                         if (retryRequests.indexOf(retryRequest) === -1) {
