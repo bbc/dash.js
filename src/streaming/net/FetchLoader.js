@@ -136,7 +136,7 @@ function FetchLoader(cfg) {
                 const requestNoQuery = httpRequest.url.split('?')[0]
                 const requestUrlParts = requestNoQuery.split('/')
                 console.log(`RnD: Fetch Request URL ${requestNoQuery}`)
-                console.log(`RnD: Segment ${requestUrlParts[requestUrlParts.length]} OG HTTPRequest: ${httpRequest.startTime} `)
+                console.log(`RnD: Segment ${requestUrlParts[requestUrlParts.length - 1]} OG HTTPRequest: ${httpRequest.startTime} `)
 
                 fetch(httpRequest.url, reqOptions).then(function (response) {
                     if (!httpRequest.response) {
