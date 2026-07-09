@@ -354,7 +354,7 @@ function HTTPLoader(cfg) {
                 onloadend()
             },
             onerror: () => {
-                console.log(`RnD: HTTP Request enerror is triggering onloadend`)
+                console.log(`RnD: HTTP Request onerror is triggering onloadend`)
                 onloadend()
             },
             progress: progress,

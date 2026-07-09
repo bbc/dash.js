@@ -166,6 +166,7 @@ function FetchLoader(cfg) {
                             };
                             httpRequest.progress(event);
                             httpRequest.onload();
+                            console.log(`RnD: Fetch loader request function calling onend`)
                             httpRequest.onend();
                             return;
                         });
@@ -268,6 +269,7 @@ function FetchLoader(cfg) {
                                 httpRequest.response.response = remaining.buffer;
                             }
                             httpRequest.onload();
+                            console.log(`RnD: Fetch loader process result function calling onend`)
                             httpRequest.onend();
                             return;
                         }
