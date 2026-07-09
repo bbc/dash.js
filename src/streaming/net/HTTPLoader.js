@@ -198,6 +198,7 @@ function HTTPLoader(cfg) {
                     }
 
                     if (config.complete) {
+                        console.log(`Rnd" onloadend request is complete`)
                         config.complete(request, httpRequest.response.statusText);
                     }
                 }
@@ -269,6 +270,7 @@ function HTTPLoader(cfg) {
                 }
 
                 if (config.complete) {
+                    console.log(`Rnd" onload request is complete`)
                     config.complete(request, httpRequest.response.statusText);
                 }
             }
