@@ -143,6 +143,7 @@ function FetchLoader(cfg) {
                     httpRequest.response.responseURL = response.url;
 
                     if (!response.ok) {
+                        console.log(`RnD: Response not ok, triggering onerror`)
                         httpRequest.onerror();
                     }
 
@@ -346,6 +347,8 @@ function FetchLoader(cfg) {
                 })
                     .catch(function (e) {
                         if (httpRequest.onerror) {
+                            console.log(`RnD: Catch in the fetch loader, triggering onerror`)
+                            console.log(e)
                             httpRequest.onerror(e);
                         }
                     });
