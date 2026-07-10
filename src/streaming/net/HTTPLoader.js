@@ -284,6 +284,7 @@ function HTTPLoader(cfg) {
                 progressTimeout = null;
             }
             if (config.abort) {
+                console.log('RnD ABORT CALLED!!!!!')
                 config.abort(request);
             }
         };
