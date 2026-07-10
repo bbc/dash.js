@@ -283,9 +283,9 @@ function HTTPLoader(cfg) {
                 clearTimeout(progressTimeout);
                 progressTimeout = null;
             }
-            // if (config.abort) {
-            //     config.abort(request);
-            // }
+            if (config.abort) {
+                config.abort(request);
+            }
         };
 
         const ontimeout = function (event) {
@@ -360,7 +360,7 @@ function HTTPLoader(cfg) {
                 onloadend()
             },
             progress: progress,
-            onabort: onabort,
+            onabort: remainingAttempts > 0 ? onabort : () => { console.log(`Don't allow abort, we're retrying internally`) },
             ontimeout: ontimeout,
             loader: loader,
             timeout: requestTimeout,
