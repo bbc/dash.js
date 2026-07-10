@@ -814,7 +814,7 @@ function StreamProcessor(config) {
 
             // in case of a media segment we reset the buffering time
             else {
-                //setExplicitBufferingTime(e.request.startTime + (e.request.duration / 2));
+                setExplicitBufferingTime(e.request.startTime + (e.request.duration / 2));
             }
 
             // In case of a seek the schedule controller was stopped and will be started once the buffer has been pruned.

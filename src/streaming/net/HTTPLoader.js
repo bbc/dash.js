@@ -283,9 +283,9 @@ function HTTPLoader(cfg) {
                 clearTimeout(progressTimeout);
                 progressTimeout = null;
             }
-            if (config.abort) {
-                config.abort(request);
-            }
+            // if (config.abort) {
+            //     config.abort(request);
+            // }
         };
 
         const ontimeout = function (event) {
