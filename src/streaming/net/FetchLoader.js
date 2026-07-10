@@ -368,12 +368,11 @@ function FetchLoader(cfg) {
 
                 const requestNoQuery = httpRequest.url.split('?')[0]
                 const requestUrlParts = requestNoQuery.split('/')
-                console.log(`RnD: Segment ${requestUrlParts[requestUrlParts.length - 1]} Re[] ${requestUrlParts[requestUrlParts.length - 2]} OG HTTPRequest: ${httpRequest.startTime} `)
+                console.log(`RnD: Segment ${requestUrlParts[requestUrlParts.length - 1]} Rep ${requestUrlParts[requestUrlParts.length - 2]} OG HTTPRequest: ${httpRequest.startTime} `)
                 console.log(`RnD: ${JSON.stringify(e)}`)
 
                 if (httpRequest.onerror && httpRequest.response.status === 200) {
                     // Error, but response code is 200, trigger error
-                    console.log(`RnD: ${JSON.stringify(e)}`)
                     console.log(`RnD: fetch loader read onerror called`)
                     httpRequest.onerror(e);
                 }
