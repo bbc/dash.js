@@ -171,7 +171,6 @@ function HTTPLoader(cfg) {
                     }
 
                     remainingAttempts--;
-                    console.log(`RnD: Attempts left after this ${remainingAttempts}, interval used: ${mediaPlayerModel.getRetryIntervalsForType(request.type)}`)
                     let retryRequest = { config: config };
 
                     retryRequests.push(retryRequest);
@@ -198,7 +197,6 @@ function HTTPLoader(cfg) {
                     }
 
                     if (config.complete) {
-                        console.log(`Rnd" onloadend request is complete`)
                         config.complete(request, httpRequest.response.statusText);
                     }
                 }
@@ -243,7 +241,6 @@ function HTTPLoader(cfg) {
                     logger.warn('Abort request ' + httpRequest.url + ' due to progress timeout');
                     httpRequest.response.onabort = null;
                     httpRequest.loader.abort(httpRequest);
-                    console.log(`RnD: Progress Timeout is triggering onloadend`)
                     onloadend();
                 }, settings.get().streaming.fragmentRequestProgressTimeout);
             }
@@ -270,7 +267,6 @@ function HTTPLoader(cfg) {
                 }
 
                 if (config.complete) {
-                    console.log(`Rnd" onload request is complete`)
                     config.complete(request, httpRequest.response.statusText);
                 }
             }
@@ -284,7 +280,6 @@ function HTTPLoader(cfg) {
                 progressTimeout = null;
             }
             if (config.abort) {
-                console.log('RnD ABORT CALLED!!!!!')
                 config.abort(request);
             }
         };
@@ -352,16 +347,10 @@ function HTTPLoader(cfg) {
             withCredentials: withCredentials,
             request: request,
             onload: onload,
-            onend: () => {
-                console.log(`RnD: HTTP Request onend is triggering onloadend`)
-                onloadend()
-            },
-            onerror: () => {
-                console.log(`RnD: HTTP Request onerror is triggering onloadend`)
-                onloadend()
-            },
+            onend: onloadend,
+            onerror: onloadend,
             progress: progress,
-            onabort: _shouldAbortOnError(config, remainingAttempts) ? onabort : () => { console.log(`Don't allow abort, we're retrying internally`) },
+            onabort: _shouldAbortOnError(config, remainingAttempts) ? onabort : () => { logger.debug(`Don't allow a request abort, we're retrying internally`) },
             ontimeout: ontimeout,
             loader: loader,
             timeout: requestTimeout,
@@ -399,9 +388,6 @@ function HTTPLoader(cfg) {
 
 
     function _shouldAbortOnError(config, remainingAttempts) {
-        console.log(`RnD: _shouldAbortOnError ${(remainingAttempts < mediaPlayerModel.getRetryAttemptsForType(
-            config.request.type
-        )) && remainingAttempts !== 0}`)
         return (remainingAttempts < mediaPlayerModel.getRetryAttemptsForType(
             config.request.type
         )) && remainingAttempts !== 0

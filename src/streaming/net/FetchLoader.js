@@ -133,11 +133,6 @@ function FetchLoader(cfg) {
             .then(() => {
                 let markBeforeFetch = Date.now();
 
-                const requestNoQuery = httpRequest.url.split('?')[0]
-                const requestUrlParts = requestNoQuery.split('/')
-                console.log(`RnD: Fetch Request URL ${requestNoQuery}`)
-                console.log(`RnD: Segment ${requestUrlParts[requestUrlParts.length - 1]} OG HTTPRequest: ${httpRequest.startTime} `)
-
                 fetch(httpRequest.url, reqOptions).then(function (response) {
                     if (!httpRequest.response) {
                         httpRequest.response = {};
@@ -147,7 +142,6 @@ function FetchLoader(cfg) {
                     httpRequest.response.responseURL = response.url;
 
                     if (!response.ok) {
-                        console.log(`RnD: Response not ok, triggering onerror`)
                         httpRequest.onerror();
                     }
 
@@ -170,7 +164,6 @@ function FetchLoader(cfg) {
                             };
                             httpRequest.progress(event);
                             httpRequest.onload();
-                            console.log(`RnD: Fetch loader request function calling onend`)
                             httpRequest.onend();
                             return;
                         });
@@ -273,7 +266,6 @@ function FetchLoader(cfg) {
                                 httpRequest.response.response = remaining.buffer;
                             }
                             httpRequest.onload();
-                            console.log(`RnD: Fetch loader process result function calling onend`)
                             httpRequest.onend();
                             return;
                         }
@@ -353,8 +345,6 @@ function FetchLoader(cfg) {
                 })
                     .catch(function (e) {
                         if (httpRequest.onerror) {
-                            console.log(`RnD: Catch in the fetch loader, triggering onerror`)
-                            console.log(e)
                             httpRequest.onerror(e);
                         }
                     });
