@@ -390,6 +390,8 @@ function HTTPLoader(cfg) {
                     requests.push(delayedRequest.httpRequest);
                     loader.load(delayedRequest.httpRequest);
                 } catch (e) {
+                    console.log("RnD: internal load error")
+                    console.log(e)
                     delayedRequest.httpRequest.onerror();
                 }
             }, (request.delayLoadingTime - now));
