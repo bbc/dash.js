@@ -374,7 +374,7 @@ function FetchLoader(cfg) {
                 if (httpRequest.onerror && httpRequest.response.status === 200) {
                     // Error, but response code is 200, trigger error
                     console.log(`RnD: fetch loader read onerror called`)
-                    httpRequest.onerror(e);
+                    // httpRequest.onerror(e);
                 }
             });
     }
