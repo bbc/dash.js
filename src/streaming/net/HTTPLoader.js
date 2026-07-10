@@ -360,7 +360,7 @@ function HTTPLoader(cfg) {
                 onloadend()
             },
             progress: progress,
-            onabort: remainingAttempts > 0 ? onabort : () => { console.log(`Don't allow abort, we're retrying internally`) },
+            onabort: _shouldAbortOnError(config, remainingAttempts) ? onabort : () => { console.log(`Don't allow abort, we're retrying internally`) },
             ontimeout: ontimeout,
             loader: loader,
             timeout: requestTimeout,
@@ -390,12 +390,20 @@ function HTTPLoader(cfg) {
                     requests.push(delayedRequest.httpRequest);
                     loader.load(delayedRequest.httpRequest);
                 } catch (e) {
-                    console.log("RnD: internal load error")
-                    console.log(e)
                     delayedRequest.httpRequest.onerror();
                 }
             }, (request.delayLoadingTime - now));
         }
+    }
+
+
+    function _shouldAbortOnError(config, remainingAttempts) {
+        console.log(`RnD: _shouldAbortOnError ${(remainingAttempts < mediaPlayerModel.getRetryAttemptsForType(
+            config.request.type
+        )) && remainingAttempts !== 0}`)
+        return (remainingAttempts < mediaPlayerModel.getRetryAttemptsForType(
+            config.request.type
+        )) && remainingAttempts !== 0
     }
 
     function _getAdditionalQueryParameter(request) {
