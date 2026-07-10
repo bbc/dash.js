@@ -37,7 +37,7 @@ import NotFragmentedTextBufferController from './text/NotFragmentedTextBufferCon
 import ScheduleController from './controllers/ScheduleController';
 import RepresentationController from '../dash/controllers/RepresentationController';
 import FactoryMaker from '../core/FactoryMaker';
-import {checkInteger} from './utils/SupervisorTools';
+import { checkInteger } from './utils/SupervisorTools';
 import EventBus from '../core/EventBus';
 import Events from '../core/events/Events';
 import MediaPlayerEvents from './MediaPlayerEvents';
@@ -47,9 +47,9 @@ import DashJSError from './vo/DashJSError';
 import Debug from '../core/Debug';
 import RequestModifier from './utils/RequestModifier';
 import URLUtils from '../streaming/utils/URLUtils';
-import {PlayListTrace} from './vo/metrics/PlayList';
+import { PlayListTrace } from './vo/metrics/PlayList';
 import SegmentsController from '../dash/controllers/SegmentsController';
-import {HTTPRequest} from './vo/metrics/HTTPRequest';
+import { HTTPRequest } from './vo/metrics/HTTPRequest';
 import TimeUtils from './utils/TimeUtils';
 
 
@@ -814,7 +814,7 @@ function StreamProcessor(config) {
 
             // in case of a media segment we reset the buffering time
             else {
-                setExplicitBufferingTime(e.request.startTime + (e.request.duration / 2));
+                //setExplicitBufferingTime(e.request.startTime + (e.request.duration / 2));
             }
 
             // In case of a seek the schedule controller was stopped and will be started once the buffer has been pruned.

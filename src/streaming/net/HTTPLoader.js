@@ -243,8 +243,8 @@ function HTTPLoader(cfg) {
                     logger.warn('Abort request ' + httpRequest.url + ' due to progress timeout');
                     httpRequest.response.onabort = null;
                     httpRequest.loader.abort(httpRequest);
-                    //console.log(`RnD: Progress Timeout is triggering onloadend`)
-                    //onloadend();
+                    console.log(`RnD: Progress Timeout is triggering onloadend`)
+                    onloadend();
                 }, settings.get().streaming.fragmentRequestProgressTimeout);
             }
 
