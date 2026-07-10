@@ -356,6 +356,7 @@ function FetchLoader(cfg) {
             .then(processResult)
             .catch(function (e) {
                 if (httpRequest.onerror && httpRequest.response.status === 200) {
+                    // Error, but response code is 200, trigger error
                     httpRequest.onerror(e);
                 }
             });
