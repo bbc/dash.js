@@ -8,6 +8,8 @@ import {HTTPRequest} from '../../../../src/streaming/vo/metrics/HTTPRequest.js';
 import Settings from '../../../../src/core/Settings.js';
 import CmcdController from '../../../../src/streaming/controllers/CmcdController.js';
 import ClientDataReportingController from '../../../../src/streaming/controllers/ClientDataReportingController.js';
+import EventBus from '../../../../src/core/EventBus.js';
+import MediaPlayerEvents from '../../../../src/streaming/MediaPlayerEvents.js';
 
 import {expect} from 'chai';
 import {fakeXhr} from 'nise';
@@ -201,6 +203,48 @@ describe('HTTPLoader', function () {
 
         expect(requests.length).to.equal(1);
         requests[0].respond(200);
+    });
+
+    it('Emits a FRAGMENT_CONTENT_LENGTH_MISMATCH event when Content-Length does not match actual length of response', async () => {
+        const eventBus = EventBus(context).getInstance();
+        const spy = sinon.spy();
+        let resolveOnComplete;
+        const completePromise = new Promise((resolve) => {
+            resolveOnComplete = resolve;
+        });
+
+        eventBus.on(MediaPlayerEvents.FRAGMENT_CONTENT_LENGTH_MISMATCH, spy, null);
+
+        const callbacks = _createCallbacks();
+        callbacks.complete = sinon.spy(() => resolveOnComplete());
+
+        httpLoader = _createHttpLoader();
+        const originalLoad = httpLoader.load;
+        httpLoader.load = new Proxy(originalLoad, {
+            apply(target, thisArg, args) {
+                const result = Reflect.apply(target, thisArg, args);
+
+                result.then(() => {
+                    requests[0].respond(200, { 'content-length': 15 }, '0'.repeat(8));
+                });
+
+                return result;
+            }
+        });
+
+        await httpLoader.load({
+            request: {
+                responseType: 'arraybuffer',
+                type: HTTPRequest.MEDIA_SEGMENT_TYPE,
+                availabilityTimeComplete: true
+            },
+            success: callbacks.success,
+            complete: callbacks.complete,
+            error: callbacks.error
+        });
+        await completePromise;
+
+        expect(spy.calledOnce).to.be.true;
     });
 
     describe('request timeout selection', function () {

@@ -493,6 +493,12 @@ class MediaPlayerEvents extends EventsBase {
          * @type {string}
          */
         this.MANAGED_MEDIA_SOURCE_END_STREAMING = 'managedMediaSourceEndStreaming';
+
+        /**
+         * Triggered when the 'Content-Length' header for a fragment does not match the byte length.
+         * @event MediaPlayerEvents#FRAGMENT_CONTENT_LENGTH_MISMATCH
+         */
+        this.FRAGMENT_CONTENT_LENGTH_MISMATCH = 'fragmentContentLengthMismatch';
     }
 }
 

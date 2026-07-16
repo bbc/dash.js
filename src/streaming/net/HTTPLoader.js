@@ -45,6 +45,7 @@ import CommonAccessTokenController from '../controllers/CommonAccessTokenControl
 import ExtUrlQueryInfoController from '../controllers/ExtUrlQueryInfoController.js';
 import CommonMediaRequest from '../vo/CommonMediaRequest.js';
 import CommonMediaResponse from '../vo/CommonMediaResponse.js';
+import MediaPlayerEvents from '../MediaPlayerEvents.js';
 
 /**
  * @module HTTPLoader
@@ -267,6 +268,15 @@ function HTTPLoader(cfg) {
                 // GET requests still need a body since dash.js consumes it (manifests, segments).
                 const hasUsableBody = !!commonMediaResponse.data || requestObject.method === HTTPRequest.POST;
                 if (commonMediaResponse.status >= 200 && commonMediaResponse.status <= 299 && hasUsableBody) {
+                    if (hasContentLengthMismatch(commonMediaResponse)) {
+                        const responseUrl = commonMediaResponse.url;
+                        const mediaType = requestObject.mediaType
+                        const headerLength = commonMediaResponse.headers['content-length'];
+                        const bodyLength = commonMediaResponse.data.byteLength;
+
+                        eventBus.trigger(MediaPlayerEvents.FRAGMENT_CONTENT_LENGTH_MISMATCH, { responseUrl, mediaType, headerLength, bodyLength });
+                    }
+
                     if (config.success) {
                         config.success(commonMediaResponse.data, commonMediaResponse.statusText, commonMediaResponse.url);
                     }
@@ -685,6 +695,19 @@ function HTTPLoader(cfg) {
         if (xhrLoader) {
             xhrLoader.resetInitialSettings();
         }
+    }
+
+    function hasContentLengthMismatch(response) {
+        if (response && response.data && response.headers) {
+            const headerLength = response.headers['content-length'];
+            const dataLength = response.data.byteLength;
+
+            if (headerLength && dataLength && Math.abs(dataLength - headerLength) > headerLength * 0.25) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     function reset() {

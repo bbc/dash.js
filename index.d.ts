@@ -2049,6 +2049,8 @@ export interface MediaPlayerClass {
 
     on(type: LogEvent['type'], listener: (e: LogEvent) => void, scope?: object): void;
 
+    on(type: FragmentContentLengthMismatch['type'], listener: (e: FragmentContentLengthMismatch) => void, scope?: object): void;
+
     on(type: ManifestLoadedEvent['type'], listener: (e: ManifestLoadedEvent) => void, scope?: object): void;
 
     on(type: MetricEvent['type'], listener: (e: MetricEvent) => void, scope?: object): void;
@@ -2432,6 +2434,7 @@ export interface MediaPlayerEvents {
     KEY_SESSION_UPDATED: 'public_keySessionUpdated';
     LICENSE_REQUEST_COMPLETE: 'public_licenseRequestComplete';
     LICENSE_REQUEST_SENDING: 'public_licenseRequestSending';
+    FRAGMENT_CONTENT_LENGTH_MISMATCH: 'fragmentContentLengthMismatch';
     LOG: 'log';
     MANIFEST_LOADED: 'manifestLoaded';
     MANIFEST_LOADING_STARTED: 'manifestLoadingStarted';
@@ -2710,6 +2713,14 @@ export interface LicenseRequestCompleteEvent extends MediaPlayerEvent {
 export interface LogEvent extends MediaPlayerEvent {
     message: string;
     type: MediaPlayerEvents['LOG'];
+}
+
+export interface FragmentContentLengthMismatch extends MediaPlayerEvent {
+    type: MediaPlayerEvents['FRAGMENT_CONTENT_LENGTH_MISMATCH'];
+    responseUrl: string;
+    mediaType: string;
+    headerLength: number;
+    bodyLength: number;
 }
 
 export interface ManifestLoadedEvent extends MediaPlayerEvent {
