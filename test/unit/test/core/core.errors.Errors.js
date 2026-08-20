@@ -28,5 +28,6 @@ describe('Errors', function () {
         expect(Errors.TIMED_TEXT_ERROR_ID_PARSE_CODE).to.equal(33);
         expect(Errors.MANIFEST_ERROR_ID_MULTIPLEXED_CODE).to.equal(34);
         expect(Errors.MEDIASOURCE_TYPE_UNSUPPORTED_CODE).to.equal(35);
+        expect(Errors.NON_EFFECTIVE_DOWNLOAD_ERROR_CODE).to.equal(37);
     });
 });

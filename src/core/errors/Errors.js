@@ -160,6 +160,11 @@ class Errors extends ErrorsBase {
          */
         this.NO_SUPPORTED_KEY_IDS = 36;
 
+        /**
+         * Error code returned when scheduling stops after too many segments are appended without making the current playback position buffered
+         */
+        this.NON_EFFECTIVE_DOWNLOAD_ERROR_CODE = 37;
+
         this.MANIFEST_LOADER_PARSING_FAILURE_ERROR_MESSAGE = 'parsing failed for ';
         this.MANIFEST_LOADER_LOADING_FAILURE_ERROR_MESSAGE = 'Failed loading manifest: ';
         this.XLINK_LOADER_LOADING_FAILURE_ERROR_MESSAGE = 'Failed loading Xlink element: ';
@@ -177,6 +182,7 @@ class Errors extends ErrorsBase {
         this.TIMED_TEXT_ERROR_MESSAGE_PARSE = 'parsing error :';
         this.MEDIASOURCE_TYPE_UNSUPPORTED_MESSAGE = 'Error creating source buffer of type : ';
         this.NO_SUPPORTED_KEY_IDS_MESSAGE = 'All possible Adaptation Sets have an invalid key status';
+        this.NON_EFFECTIVE_DOWNLOAD_ERROR_MESSAGE = 'Segment scheduling stopped because improvement in the current buffer position isn\'t happening';
     }
 }
 

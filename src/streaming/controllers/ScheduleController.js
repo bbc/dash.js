@@ -36,6 +36,9 @@ import FactoryMaker from '../../core/FactoryMaker.js';
 import Debug from '../../core/Debug.js';
 import MetricsConstants from '../constants/MetricsConstants.js';
 import MediaPlayerEvents from '../MediaPlayerEvents.js';
+import DashJSError from '../vo/DashJSError.js';
+import Errors from '../../core/errors/Errors.js';
+import {HTTPRequest} from '../vo/metrics/HTTPRequest.js';
 
 function ScheduleController(config) {
 
@@ -44,6 +47,7 @@ function ScheduleController(config) {
     const bufferController = config.bufferController;
     const context = this.context;
     const dashMetrics = config.dashMetrics;
+    const errHandler = config.errHandler;
     const eventBus = EventBus(context).getInstance();
     const fragmentModel = config.fragmentModel;
     const mediaPlayerModel = config.mediaPlayerModel;
@@ -60,6 +64,10 @@ function ScheduleController(config) {
         lastInitializedRepresentationId,
         logger,
         managedMediaSourceAllowsRequest,
+        nonEffectiveDownloadCount,
+        nonEffectiveDownloadLimitReached,
+        nonEffectiveRangeObserved,
+        nonEffectiveRangeEnd,
         scheduleTimeout,
         streamInfo,
         switchTrack,
@@ -76,6 +84,7 @@ function ScheduleController(config) {
         hasVideoTrack = _hasVideoTrack;
 
         eventBus.on(Events.URL_RESOLUTION_FAILED, _onURLResolutionFailed, instance);
+        eventBus.on(Events.BYTES_APPENDED_END_FRAGMENT, _onBytesAppended, instance);
         eventBus.on(MediaPlayerEvents.PLAYBACK_STARTED, _onPlaybackStarted, instance);
         eventBus.on(MediaPlayerEvents.PLAYBACK_RATE_CHANGED, _onPlaybackRateChanged, instance);
         eventBus.on(MediaPlayerEvents.PLAYBACK_TIME_UPDATED, _onPlaybackTimeUpdated, instance);
@@ -219,6 +228,9 @@ function ScheduleController(config) {
             if (!managedMediaSourceAllowsRequest) {
                 return false;
             }
+            if (_isNonEffectiveDownloadLimitEnabled() && nonEffectiveDownloadLimitReached) {
+                return false;
+            }
             const currentRepresentation = representationController.getCurrentRepresentation();
             return currentRepresentation && (lastInitializedRepresentationId == null || switchTrack || _shouldBuffer());
         } catch (e) {
@@ -343,6 +355,9 @@ function ScheduleController(config) {
 
     function setSwitchTrack(value) {
         switchTrack = value;
+        if (value) {
+            resetNonEffectiveDownloadLimit();
+        }
     }
 
     function getSwitchTrack() {
@@ -398,6 +413,79 @@ function ScheduleController(config) {
         clearScheduleTimer();
     }
 
+    function _onBytesAppended(e) {
+        if (!_isNonEffectiveDownloadLimitEnabled()) {
+            resetNonEffectiveDownloadLimit();
+            return;
+        }
+
+        if (nonEffectiveDownloadLimitReached) {
+            return;
+        }
+
+        if (!e || e.segmentType !== HTTPRequest.MEDIA_SEGMENT_TYPE || (type !== Constants.AUDIO && type !== Constants.VIDEO)) {
+            return;
+        }
+
+        const playbackTime = playbackController.getTime();
+        const range = _getRangeAtOrBeforeTime(e.bufferedRanges, playbackTime);
+
+        if (!nonEffectiveRangeObserved) {
+            nonEffectiveDownloadCount = 0;
+        } else if (range && range.end > nonEffectiveRangeEnd) {
+            nonEffectiveDownloadCount = 0;
+        } else {
+            nonEffectiveDownloadCount += 1;
+        }
+
+        nonEffectiveRangeEnd = range ? range.end : null;
+        nonEffectiveRangeObserved = true;
+
+        if (nonEffectiveDownloadCount >= settings.get().streaming.scheduling.nonEffectiveDownloadLimit) {
+            nonEffectiveDownloadLimitReached = true;
+            logger.warn(`Stopping ${type} segment scheduling because the current playback position is not buffered`);
+            errHandler.error(new DashJSError(
+                Errors.NON_EFFECTIVE_DOWNLOAD_ERROR_CODE,
+                Errors.NON_EFFECTIVE_DOWNLOAD_ERROR_MESSAGE,
+                {
+                    bufferedRanges: e.bufferedRanges,
+                    limit: settings.get().streaming.scheduling.nonEffectiveDownloadLimit,
+                    mediaType: type,
+                    nonEffectiveSegmentDownloadCount: nonEffectiveDownloadCount,
+                    playbackTime,
+                    streamId: streamInfo.id
+                }
+            ));
+            clearScheduleTimer();
+        }
+    }
+
+    function _getRangeAtOrBeforeTime(ranges, time) {
+        if (!ranges || isNaN(time)) {
+            return null;
+        }
+
+        let precedingRange = null;
+        for (let index = 0; index < ranges.length; index++) {
+            const range = {
+                start: ranges.start(index),
+                end: ranges.end(index)
+            };
+            if (range.start <= time && time <= range.end) {
+                return range;
+            }
+            if (range.end <= time) {
+                precedingRange = range;
+            }
+        }
+
+        return precedingRange;
+    }
+
+    function _isNonEffectiveDownloadLimitEnabled() {
+        return settings.get().streaming.scheduling.nonEffectiveDownloadLimit > 0;
+    }
+
     function _onPlaybackStarted() {
         if (!settings.get().streaming.scheduling.scheduleWhilePaused) {
             startScheduleTimer();
@@ -438,10 +526,19 @@ function ScheduleController(config) {
         switchTrack = false;
         initSegmentRequired = false;
         managedMediaSourceAllowsRequest = true;
+        resetNonEffectiveDownloadLimit();
+    }
+
+    function resetNonEffectiveDownloadLimit() {
+        nonEffectiveDownloadCount = 0;
+        nonEffectiveDownloadLimitReached = false;
+        nonEffectiveRangeObserved = false;
+        nonEffectiveRangeEnd = null;
     }
 
     function reset() {
         eventBus.off(Events.URL_RESOLUTION_FAILED, _onURLResolutionFailed, instance);
+        eventBus.off(Events.BYTES_APPENDED_END_FRAGMENT, _onBytesAppended, instance);
         eventBus.off(MediaPlayerEvents.PLAYBACK_STARTED, _onPlaybackStarted, instance);
         eventBus.off(MediaPlayerEvents.PLAYBACK_RATE_CHANGED, _onPlaybackRateChanged, instance);
         eventBus.off(MediaPlayerEvents.PLAYBACK_TIME_UPDATED, _onPlaybackTimeUpdated, instance);
@@ -468,6 +565,7 @@ function ScheduleController(config) {
         getType,
         initialize,
         reset,
+        resetNonEffectiveDownloadLimit,
         setShouldCheckPlaybackQuality,
         setInitSegmentRequired,
         setLastInitializedRepresentationId,

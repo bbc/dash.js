@@ -630,6 +630,8 @@ import SwitchRequest from '../streaming/rules/SwitchRequest.js';
  * Default timeout between two consecutive low-latency segment scheduling attempts
  * @property {boolean} [scheduleWhilePaused=true]
  * Set to true if you would like dash.js to keep downloading fragments in the background when the video element is paused.
+ * @property {number} [nonEffectiveDownloadLimit=0]
+ * Maximum number of consecutive media segments that may be appended without making the current playback position buffered. A value less than or equal to zero disables this limit.
  */
 
 /**
@@ -1315,7 +1317,8 @@ function Settings() {
             scheduling: {
                 defaultTimeout: 500,
                 lowLatencyTimeout: 0,
-                scheduleWhilePaused: true
+                scheduleWhilePaused: true,
+                nonEffectiveDownloadLimit: 0
             },
             text: {
                 defaultEnabled: true,

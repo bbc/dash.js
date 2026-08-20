@@ -1,11 +1,17 @@
 import Settings from '../../../../src/core/Settings.js';
 import ScheduleController from '../../../../src/streaming/controllers/ScheduleController.js';
+import EventBus from '../../../../src/core/EventBus.js';
+import Events from '../../../../src/core/events/Events.js';
+import Errors from '../../../../src/core/errors/Errors.js';
 import VoHelper from '../../helpers/VOHelper.js';
 import Constants from '../../../../src/streaming/constants/Constants.js';
+import MediaPlayerEvents from '../../../../src/streaming/MediaPlayerEvents.js';
+import {HTTPRequest} from '../../../../src/streaming/vo/metrics/HTTPRequest.js';
 import AdapterMock from '../../mocks/AdapterMock.js';
 import DashMetricsMock from '../../mocks/DashMetricsMock.js';
 import AbrControllerMock from '../../mocks/AbrControllerMock.js';
 import MediaPlayerModelMock from '../../mocks/MediaPlayerModelMock.js';
+import PlaybackControllerMock from '../../mocks/PlaybackControllerMock.js';
 import TextControllerMock from '../../mocks/TextControllerMock.js';
 import RepresentationControllerMock from '../../mocks/RepresentationControllerMock.js';
 
@@ -13,9 +19,18 @@ const voHelper = new VoHelper();
 import {expect} from 'chai';
 const context = {};
 const settings = Settings(context).getInstance();
+const eventBus = EventBus(context).getInstance();
 
 let scheduleController;
 let streamInfo, adapter, dashMetrics, abrController, mediaPlayerModel, textController, representationController;
+
+function createBufferedRanges(ranges) {
+    return {
+        length: ranges.length,
+        start: (index) => ranges[index].start,
+        end: (index) => ranges[index].end
+    };
+}
 
 describe('ScheduleController', function () {
 
@@ -213,4 +228,97 @@ describe('ScheduleController', function () {
         })
 
     })
+
+    describe('nonEffectiveDownloadLimit', () => {
+        let playbackController;
+        let errors;
+        let errorListener;
+
+        beforeEach(() => {
+            streamInfo = voHelper.getDummyStreamInfo();
+            adapter = new AdapterMock();
+            dashMetrics = new DashMetricsMock();
+            abrController = new AbrControllerMock();
+            mediaPlayerModel = new MediaPlayerModelMock();
+            playbackController = new PlaybackControllerMock();
+            representationController = new RepresentationControllerMock();
+            errors = [];
+
+            scheduleController = ScheduleController(context).create({
+                abrController,
+                adapter,
+                dashMetrics,
+                errHandler: {
+                    error: (error) => eventBus.trigger(MediaPlayerEvents.ERROR, {error})
+                },
+                mediaPlayerModel,
+                playbackController,
+                representationController,
+                settings,
+                streamInfo,
+                type: Constants.VIDEO
+            });
+            scheduleController.initialize(true);
+            errorListener = (event) => errors.push(event.error);
+            eventBus.on(MediaPlayerEvents.ERROR, errorListener);
+        });
+
+        afterEach(() => {
+            eventBus.off(MediaPlayerEvents.ERROR, errorListener);
+        });
+
+        function triggerMediaAppend(bufferedRanges) {
+            eventBus.trigger(Events.BYTES_APPENDED_END_FRAGMENT, {
+                bufferedRanges,
+                segmentType: HTTPRequest.MEDIA_SEGMENT_TYPE
+            }, {
+                mediaType: Constants.VIDEO,
+                streamId: streamInfo.id
+            });
+        }
+
+        it('should not report an error when the limit is zero or negative', () => {
+            playbackController.setTime(7);
+            const ranges = createBufferedRanges([{start: 0, end: 10}, {start: 14, end: 130}]);
+
+            triggerMediaAppend(ranges);
+            triggerMediaAppend(ranges);
+            settings.update({streaming: {scheduling: {nonEffectiveDownloadLimit: -1}}});
+            triggerMediaAppend(ranges);
+
+            expect(errors).to.be.empty;
+        });
+
+        it('should report the current TimeRanges when the limit is reached', () => {
+            settings.update({streaming: {scheduling: {nonEffectiveDownloadLimit: 2}}});
+            playbackController.setTime(7);
+            const initialRanges = createBufferedRanges([{start: 0, end: 10}, {start: 14, end: 20}]);
+            const firstNonEffectiveRanges = createBufferedRanges([{start: 0, end: 10}, {start: 14, end: 30}]);
+            const limitReachedRanges = createBufferedRanges([{start: 0, end: 10}, {start: 14, end: 40}]);
+
+            triggerMediaAppend(initialRanges);
+            triggerMediaAppend(firstNonEffectiveRanges);
+            triggerMediaAppend(limitReachedRanges);
+            triggerMediaAppend(limitReachedRanges);
+
+            expect(errors).to.have.lengthOf(1);
+            expect(errors[0].code).to.equal(Errors.NON_EFFECTIVE_DOWNLOAD_ERROR_CODE);
+            expect(errors[0].data.bufferedRanges).to.equal(limitReachedRanges);
+            expect(errors[0].data.playbackTime).to.equal(7);
+            expect(errors[0].data.limit).to.equal(2);
+            expect(errors[0].data.nonEffectiveSegmentDownloadCount).to.equal(2);
+        });
+
+        it('should reset the counter when the range at the playback position expands', () => {
+            settings.update({streaming: {scheduling: {nonEffectiveDownloadLimit: 2}}});
+            playbackController.setTime(7);
+
+            triggerMediaAppend(createBufferedRanges([{start: 0, end: 10}, {start: 14, end: 20}]));
+            triggerMediaAppend(createBufferedRanges([{start: 0, end: 10}, {start: 14, end: 30}]));
+            triggerMediaAppend(createBufferedRanges([{start: 0, end: 15}, {start: 16, end: 30}]));
+            triggerMediaAppend(createBufferedRanges([{start: 0, end: 15}, {start: 16, end: 40}]));
+
+            expect(errors).to.be.empty;
+        });
+    });
 });

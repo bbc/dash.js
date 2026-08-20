@@ -181,6 +181,7 @@ function StreamProcessor(config) {
             adapter,
             bufferController,
             dashMetrics,
+            errHandler,
             fragmentModel,
             mediaController,
             mediaPlayerModel,
@@ -285,6 +286,8 @@ function StreamProcessor(config) {
      */
     function prepareInnerPeriodPlaybackSeeking(e) {
         return new Promise((resolve) => {
+
+            scheduleController.resetNonEffectiveDownloadLimit();
 
             // If we seek to a buffered area we can keep requesting where we left before the seek
             // If we seek back then forwards buffering will stop until we are below our buffer goal
