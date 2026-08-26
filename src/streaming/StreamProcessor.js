@@ -1177,6 +1177,10 @@ function StreamProcessor(config) {
         return representationController;
     }
 
+    function getSegmentsController() {
+        return segmentsController;
+    }
+
     function getBuffer() {
         return bufferController ? bufferController.getBuffer() : null;
     }
@@ -1622,6 +1626,7 @@ function StreamProcessor(config) {
         getMediaSource,
         getRepresentation,
         getRepresentationController,
+        getSegmentsController,
         getScheduleController,
         getStreamId,
         getStreamInfo,
