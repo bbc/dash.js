@@ -143,6 +143,91 @@ describe('ScheduleController', function () {
                 const result = scheduleController.getBufferTarget();
                 expect(result).to.be.equal(settings.get().streaming.buffer.bufferTimeAtTopQualityLongForm);
             });
+
+            it('should use the generic buffer target as the linked video range search window and cap', () => {
+                const playbackController = new PlaybackControllerMock();
+                playbackController.setTime(7);
+                const sourceBuffer = {
+                    getAllBufferRanges: () => createBufferedRanges([{start: 0, end: 10}, {start: 14, end: 130}])
+                };
+                dashMetrics.getCurrentBufferLevel = () => 5;
+                settings.update({streaming: {gaps: {jumpGaps: true, jumpLargeGaps: true}}});
+                scheduleController.reset();
+                scheduleController = ScheduleController(context).create({
+                    streamInfo,
+                    adapter,
+                    type: Constants.AUDIO,
+                    dashMetrics,
+                    abrController,
+                    mediaPlayerModel,
+                    playbackController,
+                    representationController,
+                    settings
+                });
+                scheduleController.setBufferTargetLink({
+                    getBuffer: () => sourceBuffer
+                });
+                scheduleController.initialize(true);
+                representationController.getCurrentRepresentation = () => ({fragmentDuration: 6});
+
+                expect(scheduleController.getBufferTarget()).to.equal(12);
+            });
+
+            it('should ignore a linked video range that starts beyond the generic buffer target', () => {
+                const playbackController = new PlaybackControllerMock();
+                playbackController.setTime(5);
+                const sourceBuffer = {
+                    getAllBufferRanges: () => createBufferedRanges([{start: 0, end: 10}, {start: 500, end: 520}])
+                };
+                settings.update({streaming: {gaps: {jumpGaps: true, jumpLargeGaps: true}}});
+                scheduleController.reset();
+                scheduleController = ScheduleController(context).create({
+                    streamInfo,
+                    adapter,
+                    type: Constants.AUDIO,
+                    dashMetrics,
+                    abrController,
+                    mediaPlayerModel,
+                    playbackController,
+                    representationController,
+                    settings
+                });
+                scheduleController.setBufferTargetLink({
+                    getBuffer: () => sourceBuffer
+                });
+                scheduleController.initialize(true);
+                representationController.getCurrentRepresentation = () => ({fragmentDuration: 6});
+
+                expect(scheduleController.getBufferTarget()).to.equal(16);
+            });
+
+            it('should ignore the linked video buffer horizon when large gap jumping is disabled', () => {
+                const playbackController = new PlaybackControllerMock();
+                playbackController.setTime(7);
+                const sourceBuffer = {
+                    getAllBufferRanges: () => createBufferedRanges([{start: 0, end: 10}, {start: 14, end: 130}])
+                };
+                settings.update({streaming: {gaps: {jumpGaps: false, jumpLargeGaps: false}}});
+                scheduleController.reset();
+                scheduleController = ScheduleController(context).create({
+                    streamInfo,
+                    adapter,
+                    type: Constants.AUDIO,
+                    dashMetrics,
+                    abrController,
+                    mediaPlayerModel,
+                    playbackController,
+                    representationController,
+                    settings
+                });
+                scheduleController.setBufferTargetLink({
+                    getBuffer: () => sourceBuffer
+                });
+                scheduleController.initialize(true);
+                representationController.getCurrentRepresentation = () => ({fragmentDuration: 6});
+
+                expect(scheduleController.getBufferTarget()).to.equal(16);
+            });
         })
 
         describe('for type video', () => {
