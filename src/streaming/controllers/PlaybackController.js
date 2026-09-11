@@ -635,7 +635,8 @@ function PlaybackController() {
 
         playbackStalled = e.state === MetricsConstants.BUFFER_EMPTY;
 
-        if (settings.get().streaming.buffer.setStallState) {
+        const bufferedRanges = videoModel.getBufferRange();
+        if (settings.get().streaming.buffer.setStallState && !isSeeking() && bufferedRanges && bufferedRanges.length > 0) {
             videoModel.setStallState(e.mediaType, e.state === MetricsConstants.BUFFER_EMPTY);
         }
     }
