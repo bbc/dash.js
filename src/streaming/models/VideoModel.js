@@ -261,6 +261,10 @@ function VideoModel() {
     function setSource(source) {
         if (element) {
             if (source) {
+                // when setting a new source, store the
+                // previousPlaybackRate for the synthetic stall that
+                // will likely immediately come out.
+                previousPlaybackRate = element.playbackRate;
                 element.src = source;
             } else {
                 element.removeAttribute('src');

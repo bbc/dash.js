@@ -116,7 +116,9 @@ function CatchupController() {
     function reset() {
         _unregisterEvents();
         _resetInitialSettings();
-        videoModel.setPlaybackRate(1.0, true);
+        // This resets in all scenarios, even when playing OD assets
+        // and it's done nothing, not sure it should reset at all?
+        // videoModel.setPlaybackRate(1.0, true);
     }
 
     function _resetInitialSettings() {
