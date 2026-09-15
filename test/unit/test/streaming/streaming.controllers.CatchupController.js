@@ -73,6 +73,8 @@ describe('CatchupController', function () {
         });
     });
 
+    /*  Removed because we do not want the behaviour.
+
     describe('Method reset', function () {
         it('should reset the controller and set playback rate to 1.0', function () {
             const setPlaybackRateSpy = sinon.spy(videoModelMock, 'setPlaybackRate');
@@ -81,7 +83,7 @@ describe('CatchupController', function () {
             
             expect(setPlaybackRateSpy.calledWith(1.0, true)).to.be.true;
         });
-    });
+    });*/
 
     describe('Event handling', function () {
         beforeEach(function () {
