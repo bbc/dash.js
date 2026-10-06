@@ -62,6 +62,11 @@ import {HTTPRequest} from '../streaming/vo/metrics/HTTPRequest';
  *          flushBufferAtTrackSwitch: false,
  *          calcSegmentAvailabilityRangeFromTimeline: false,
  *          reuseExistingSourceBuffers: true,
+ *          buffer: {
+ *              syntheticStallEvents: {
+ *                  enabled: true
+ *              }
+ *          },
  *          bufferPruningInterval: 10,
  *          bufferToKeep: 20,
  *          jumpGaps: true,
@@ -435,6 +440,11 @@ function Settings() {
             flushBufferAtTrackSwitch: false,
             calcSegmentAvailabilityRangeFromTimeline: false,
             reuseExistingSourceBuffers: true,
+            buffer: {
+                syntheticStallEvents: {
+                    enabled: true
+                }
+            },
             bufferPruningInterval: 10,
             bufferToKeep: 20,
             jumpGaps: true,

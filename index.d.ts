@@ -115,6 +115,11 @@ declare namespace dashjs {
             flushBufferAtTrackSwitch?: boolean;
             reuseExistingSourceBuffers?: boolean;
             calcSegmentAvailabilityRangeFromTimeline?: boolean,
+            buffer?: {
+                syntheticStallEvents?: {
+                    enabled?: boolean;
+                };
+            };
             bufferPruningInterval?: number;
             bufferToKeep?: number;
             bufferAheadToKeep?: number;

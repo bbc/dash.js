@@ -33,6 +33,7 @@ import FactoryMaker from '../../core/FactoryMaker';
 import EventBus from '../../core/EventBus';
 import Events from '../../core/events/Events';
 import Debug from '../../core/Debug';
+import Settings from '../../core/Settings';
 
 function VideoModel() {
 
@@ -46,6 +47,7 @@ function VideoModel() {
 
     const context = this.context;
     const eventBus = EventBus(context).getInstance();
+    const settings = Settings(context).getInstance();
     const stalledStreams = [];
 
     function setup() {
@@ -196,7 +198,7 @@ function VideoModel() {
         }
 
         stalledStreams.push(type);
-        if (element && stalledStreams.length === 1) {
+        if (settings.get().streaming.buffer.syntheticStallEvents.enabled && element && stalledStreams.length === 1) {
             // Halt playback until nothing is stalled.
             event = document.createEvent('Event');
             event.initEvent('waiting', true, false);
@@ -217,7 +219,7 @@ function VideoModel() {
             stalledStreams.splice(index, 1);
         }
         // If nothing is stalled resume playback.
-        if (element && isStalled() === false && element.playbackRate === 0) {
+        if (settings.get().streaming.buffer.syntheticStallEvents.enabled && element && isStalled() === false && element.playbackRate === 0) {
             setPlaybackRate(previousPlaybackRate || 1);
             if (!element.paused) {
                 event = document.createEvent('Event');
@@ -237,7 +239,7 @@ function VideoModel() {
 
     //Calling play on the element will emit playing - even if the stream is stalled. If the stream is stalled, emit a waiting event.
     function onPlaying() {
-        if (element && isStalled() && element.playbackRate === 0) {
+        if (settings.get().streaming.buffer.syntheticStallEvents.enabled && element && isStalled() && element.playbackRate === 0) {
             const event = document.createEvent('Event');
             event.initEvent('waiting', true, false);
             element.dispatchEvent(event);
