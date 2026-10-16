@@ -92,6 +92,17 @@ describe('VideoModel', () => {
 
                 videoModel.setStallState('video', false);
             });
+
+            it('Should clear a stalled stream and restore playback rate', () => {
+                videoElementMock.playbackRate = 1;
+                videoElementMock.readyState = Constants.VIDEO_ELEMENT_READY_STATES.HAVE_FUTURE_DATA;
+
+                videoModel.setStallState('video', true);
+                videoModel.clearStallState();
+
+                expect(videoModel.isStalled()).to.equal(false);
+                expect(videoElementMock.playbackRate).to.equal(1);
+            });
         });
     });
 });

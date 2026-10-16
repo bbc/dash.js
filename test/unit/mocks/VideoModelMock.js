@@ -127,6 +127,9 @@ class VideoModelMock {
         this.fireEvent('seeking', {});
     }
 
+    clearStallState() {
+    }
+
     getTime() {
         return this.time;
     }

@@ -310,6 +310,32 @@ function VideoModel() {
         stallStream(type, state);
     }
 
+    function clearStallState() {
+        const hadStalledState = stalledStreams.length > 0;
+
+        if (resumeReadyStateFunction && resumeReadyStateFunction.func && resumeReadyStateFunction.event) {
+            removeEventListener(resumeReadyStateFunction.event, resumeReadyStateFunction.func);
+            resumeReadyStateFunction = null;
+        }
+
+        stalledStreams.length = 0;
+
+        if (hadStalledState && settings.get().streaming.buffer.syntheticStallEvents.enabled && element && element.playbackRate === 0) {
+            const resume = () => {
+                if (!element || isStalled()) {
+                    return;
+                }
+                setPlaybackRate(previousPlaybackRate || 1, settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState);
+            };
+
+            if (settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState) {
+                resume();
+            } else {
+                resumeReadyStateFunction = waitForReadyState(Constants.VIDEO_ELEMENT_READY_STATES.HAVE_FUTURE_DATA, resume);
+            }
+        }
+    }
+
     function isStalled() {
         return (stalledStreams.length > 0);
     }
@@ -342,7 +368,7 @@ function VideoModel() {
             stalledStreams.splice(index, 1);
         }
 
-        if (settings.get().streaming.buffer.syntheticStallEvents.enabled && element && !isStalled()) {
+        if (settings.get().streaming.buffer.syntheticStallEvents.enabled && element && !isStalled() && element.playbackRate === 0) {
             const resume = () => {
                 setPlaybackRate(previousPlaybackRate || 1, settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState);
 
@@ -592,6 +618,7 @@ function VideoModel() {
         addTextTrack,
         appendChild,
         destroy,
+        clearStallState,
         getBufferRange,
         getClientHeight,
         getClientWidth,

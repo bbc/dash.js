@@ -700,6 +700,7 @@ function PlaybackController() {
 
     function _onPlaybackSeeked() {
         logger.info('Native video element event: seeked');
+        videoModel.clearStallState();
         internalSeekTarget = NaN;
         eventBus.trigger(Events.PLAYBACK_SEEKED, {
             streamId: streamInfo.id
