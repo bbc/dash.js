@@ -294,7 +294,9 @@ function CatchupController() {
             // Don't catchup during synthetic stalls -
             // prevents edge case where Catchup Controller and Synthetic Stalls Event
             // "fight" over the playback rate
-            if (playbackStalled && videoModel.getPlaybackRate() === 0) {
+            const syntheticStallSettings = settings.get().streaming.buffer.syntheticStallEvents;
+            if ((syntheticStallSettings.enabled && syntheticStallSettings.ignoreReadyState && videoModel.isStalled()) ||
+                (playbackStalled && videoModel.getPlaybackRate() === 0)) {
                 return false;
             }
 

@@ -90,7 +90,9 @@ function VideoModel() {
     function reset() {
         clearTimeout(timeout);
         eventBus.off(Events.PLAYBACK_PLAYING, onPlaying, this);
+        _resetStallRate();
         stalledStreams.length = 0;
+        previousPlaybackRate = undefined;
         _disposeResizeObserver();
     }
 
@@ -130,6 +132,13 @@ function VideoModel() {
             return;
         }
 
+        if (settings.get().streaming.buffer.syntheticStallEvents.enabled &&
+            isStalled() && value !== 0) {
+            previousPlaybackRate = value;
+            element.playbackRate = 0;
+            return;
+        }
+
         if (ignoreReadyState) {
             element.playbackRate = value;
             return;
@@ -139,6 +148,36 @@ function VideoModel() {
         waitForReadyState(Constants.VIDEO_ELEMENT_READY_STATES.HAVE_FUTURE_DATA, () => {
             element.playbackRate = value;
         });
+    }
+
+    function _onPlaybackRateChanged() {
+        if (element.playbackRate !== 0) {
+            _clearStallOnRateChange();
+        }
+    }
+
+    function _clearStallOnRateChange() {
+        removeEventListener('ratechange', _onPlaybackRateChanged);
+        _cancelResumeReadyState();
+        if (isStalled()) {
+            stalledStreams.length = 0;
+            _emitPlaying();
+        }
+    }
+
+    function _emitPlaying() {
+        if (element && !element.paused) {
+            const event = document.createEvent('Event');
+            event.initEvent('playing', true, false);
+            element.dispatchEvent(event);
+        }
+    }
+
+    function _resetStallRate() {
+        removeEventListener('ratechange', _onPlaybackRateChanged);
+        if (previousPlaybackRate !== undefined && element && element.playbackRate === 0) {
+            element.playbackRate = previousPlaybackRate ?? 1;
+        }
     }
 
     //TODO Move the DVR window calculations from MediaPlayer to Here.
@@ -223,6 +262,13 @@ function VideoModel() {
             return;
         }
 
+        if (settings.get().streaming.buffer.syntheticStallEvents.enabled &&
+            settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState &&
+            isStalled()) {
+            _resetStallRate();
+            stalledStreams.length = 0;
+            previousPlaybackRate = undefined;
+        }
         _unregisterResizeObserver(element);
         element = value;
 
@@ -264,7 +310,11 @@ function VideoModel() {
                 // when setting a new source, store the
                 // previousPlaybackRate for the synthetic stall that
                 // will likely immediately come out.
-                previousPlaybackRate = element.playbackRate;
+                if (!(settings.get().streaming.buffer.syntheticStallEvents.enabled &&
+                    settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState &&
+                    isStalled())) {
+                    previousPlaybackRate = element.playbackRate;
+                }
                 element.src = source;
             } else {
                 element.removeAttribute('src');
@@ -313,26 +363,40 @@ function VideoModel() {
     function clearStallState() {
         const hadStalledState = stalledStreams.length > 0;
 
+        _cancelResumeReadyState();
+        stalledStreams.length = 0;
+        if (hadStalledState) {
+            _resumeAfterStall(false);
+        }
+    }
+
+    function _cancelResumeReadyState() {
         if (resumeReadyStateFunction && resumeReadyStateFunction.func && resumeReadyStateFunction.event) {
             removeEventListener(resumeReadyStateFunction.event, resumeReadyStateFunction.func);
             resumeReadyStateFunction = null;
         }
+    }
 
-        stalledStreams.length = 0;
+    function _resumeAfterStall(emitPlaying) {
+        if (!element || !settings.get().streaming.buffer.syntheticStallEvents.enabled || element.playbackRate !== 0) {
+            return;
+        }
 
-        if (hadStalledState && settings.get().streaming.buffer.syntheticStallEvents.enabled && element && element.playbackRate === 0) {
-            const resume = () => {
-                if (!element || isStalled()) {
-                    return;
-                }
-                setPlaybackRate(previousPlaybackRate || 1, settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState);
-            };
-
-            if (settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState) {
-                resume();
-            } else {
-                resumeReadyStateFunction = waitForReadyState(Constants.VIDEO_ELEMENT_READY_STATES.HAVE_FUTURE_DATA, resume);
+        const resume = () => {
+            if (!element || isStalled()) {
+                return;
             }
+            setPlaybackRate(previousPlaybackRate ?? 1, settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState);
+            if (emitPlaying) {
+                _emitPlaying();
+            }
+        };
+
+        if (settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState) {
+            resume();
+        } else {
+            _cancelResumeReadyState();
+            resumeReadyStateFunction = waitForReadyState(Constants.VIDEO_ELEMENT_READY_STATES.HAVE_FUTURE_DATA, resume);
         }
     }
 
@@ -346,11 +410,11 @@ function VideoModel() {
         }
 
         stalledStreams.push(type);
-
         if (settings.get().streaming.buffer.syntheticStallEvents.enabled && element && stalledStreams.length === 1 && (settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState || getReadyState() >= Constants.VIDEO_ELEMENT_READY_STATES.HAVE_FUTURE_DATA)) {
             // Halt playback until nothing is stalled
             previousPlaybackRate = element.playbackRate;
             setPlaybackRate(0, true);
+            addEventListener('ratechange', _onPlaybackRateChanged);
 
             const event = document.createEvent('Event');
             event.initEvent('waiting', true, false);
@@ -368,25 +432,8 @@ function VideoModel() {
             stalledStreams.splice(index, 1);
         }
 
-        if (settings.get().streaming.buffer.syntheticStallEvents.enabled && element && !isStalled() && element.playbackRate === 0) {
-            const resume = () => {
-                setPlaybackRate(previousPlaybackRate || 1, settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState);
-
-                if (!element.paused) {
-                    const event = document.createEvent('Event');
-                    event.initEvent('playing', true, false);
-                    element.dispatchEvent(event);
-                }
-            }
-
-            if (settings.get().streaming.buffer.syntheticStallEvents.ignoreReadyState) {
-                resume();
-            } else {
-                if (resumeReadyStateFunction && resumeReadyStateFunction.func && resumeReadyStateFunction.event) {
-                    removeEventListener(resumeReadyStateFunction.event, resumeReadyStateFunction.func);
-                }
-                resumeReadyStateFunction = waitForReadyState(Constants.VIDEO_ELEMENT_READY_STATES.HAVE_FUTURE_DATA, resume);
-            }
+        if (!isStalled()) {
+            _resumeAfterStall(true);
         }
     }
 
@@ -400,6 +447,7 @@ function VideoModel() {
 
     //Calling play on the element will emit playing - even if the stream is stalled. If the stream is stalled, emit a waiting event.
     function onPlaying() {
+        _onPlaybackRateChanged();
         if (element && isStalled() && element.playbackRate === 0) {
             const event = document.createEvent('Event');
             event.initEvent('waiting', true, false);

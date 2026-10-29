@@ -150,6 +150,32 @@ describe('CatchupController', function () {
             expect(setPlaybackRateSpy.called).to.be.true;
         });
 
+        it('should not apply catchup during a synthetic stall even before an external rate change is corrected', function () {
+            settings.update({ streaming: { buffer: { syntheticStallEvents: { enabled: true, ignoreReadyState: true } } } });
+            playbackControllerMock.getIsDynamic = sinon.stub().returns(true);
+            mediaPlayerModelMock.getCatchupModeEnabled = sinon.stub().returns(true);
+            mediaPlayerModelMock.getCatchupPlaybackRates = sinon.stub().returns({ min: -0.5, max: 0.5 });
+            playbackControllerMock.isPaused = sinon.stub().returns(false);
+            playbackControllerMock.isSeeking = sinon.stub().returns(false);
+            playbackControllerMock.getTime = sinon.stub().returns(10);
+            playbackControllerMock.getCurrentLiveLatency = sinon.stub().returns(5);
+            playbackControllerMock.getLiveDelay = sinon.stub().returns(3);
+            playbackControllerMock.getBufferLevel = sinon.stub().returns(2);
+            videoModelMock.isStalled = sinon.stub().returns(true);
+            videoModelMock.getPlaybackRate = sinon.stub().returns(1.5);
+            const setPlaybackRateSpy = sinon.spy(videoModelMock, 'setPlaybackRate');
+            const seekSpy = sinon.spy(playbackControllerMock, 'seekToCurrentLive');
+
+            eventBus.trigger(MediaPlayerEvents.PLAYBACK_PROGRESS);
+
+            expect(setPlaybackRateSpy.notCalled).to.be.true;
+            expect(seekSpy.notCalled).to.be.true;
+
+            videoModelMock.isStalled.returns(false);
+            eventBus.trigger(MediaPlayerEvents.PLAYBACK_PROGRESS);
+            expect(setPlaybackRateSpy.called).to.be.true;
+        });
+
         it('should handle PLAYBACK_SEEKED event', function () {
             eventBus.trigger(MediaPlayerEvents.PLAYBACK_SEEKED);
         });
